@@ -1,0 +1,126 @@
+/* ==========================================================================
+   PANORAMA — Design System & Custom Properties
+   Extended with Vibrant Accents & Animation Tokens
+   ========================================================================== */
+
+:root {
+  /* ==========================================================================
+     1. PRIMARY NAVY & TYPOGRAPHY COLOURS (from design.md)
+     ========================================================================== */
+  --color-navy-950: #0A0F1D;        /* Deepest navy (headings, brand wordmark) */
+  --color-navy-900: #0F172A;        /* Primary navy (text, dark buttons) */
+  --color-navy-800: #1E293B;        /* Secondary navy (subheadings, active states) */
+  --color-navy-700: #334155;        /* Body text primary */
+  --color-navy-600: #475569;        /* Body text secondary, muted descriptions */
+  --color-navy-400: #94A3B8;        /* Placeholder text, subtle icons */
+
+  /* Surface & Background Canvas */
+  --color-bg-canvas: #F8FAFC;       /* Light cool grey-white application background */
+  --color-bg-surface: #FFFFFF;      /* Pure white for cards, panels, and modals */
+  --color-bg-subtle: #F1F5F9;       /* Secondary card background, table headers */
+  --color-bg-hover: #E2E8F0;        /* Hover backgrounds for rows and list items */
+  --color-bg-glass: rgba(255, 255, 255, 0.88); /* Glassmorphism surface */
+
+  /* Subtle Blue Accent Colours */
+  --color-blue-primary: #2563EB;    /* Vibrant primary action blue */
+  --color-blue-hover: #1D4ED8;      /* Primary button hover state */
+  --color-blue-subtle: #EFF6FF;     /* Active pill backgrounds, light tint */
+  --color-blue-border: #BFDBFE;     /* Accent borders */
+  --color-blue-glow: rgba(37, 99, 235, 0.2); /* Focus rings and halos */
+
+  /* Neutral Borders & Dividers */
+  --border-light: #E2E8F0;          /* Standard card and container borders */
+  --border-medium: #CBD5E1;         /* Input field borders and active dividers */
+  --border-focus: #3B82F6;          /* Input focus outline color */
+
+  /* Topic Confidence Indicators (from design.md) */
+  --confidence-low-text: #B91C1C;
+  --confidence-low-bg: #FEF2F2;
+  --confidence-low-border: #FECACA;
+  --confidence-low-glow: rgba(239, 68, 68, 0.25);
+
+  --confidence-med-text: #B45309;
+  --confidence-med-bg: #FFFBEB;
+  --confidence-med-border: #FDE68A;
+  --confidence-med-glow: rgba(245, 158, 11, 0.25);
+
+  --confidence-high-text: #047857;
+  --confidence-high-bg: #ECFDF5;
+  --confidence-high-border: #A7F3D0;
+  --confidence-high-glow: rgba(16, 185, 129, 0.25);
+
+  /* Task Importance Tags */
+  --importance-high-text: #991B1B;
+  --importance-high-bg: #FEE2E2;
+  --importance-med-text: #1E40AF;
+  --importance-med-bg: #DBEAFE;
+  --importance-low-text: #475569;
+  --importance-low-bg: #F1F5F9;
+
+  /* ==========================================================================
+     VIBRANT SIGNATURE GRADIENTS & MODERN ACCENTS (Elevated Aesthetic)
+     ========================================================================== */
+  --gradient-primary: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  --gradient-blue: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+  --gradient-accent-aurora: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #EC4899 100%);
+  --gradient-emerald: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  --gradient-amber: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  --gradient-rose: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  --gradient-purple: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
+  --gradient-card-subtle: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+
+  /* ==========================================================================
+     2. TYPOGRAPHY & MEASUREMENTS (from design.md)
+     ========================================================================== */
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Font Sizes */
+  --font-size-xs: 0.75rem;          /* 12px - Badges, tiny labels */
+  --font-size-sm: 0.875rem;         /* 14px - Secondary body, inputs, buttons */
+  --font-size-base: 1rem;           /* 16px - Standard reading body */
+  --font-size-md: 1.125rem;         /* 18px - Section subheadings, card titles */
+  --font-size-lg: 1.375rem;         /* 22px - Section headers */
+  --font-size-xl: 1.75rem;          /* 28px - Primary view headings */
+  --font-size-2xl: 2.25rem;         /* 36px - Hero banners & metrics */
+
+  /* Font Weights */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ==========================================================================
+     3. RADII, SHADOWS & ELEVATION
+     ========================================================================== */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Soft Ambient Shadows & Glows */
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --shadow-card: 0 2px 8px -2px rgba(15, 23, 42, 0.06), 0 1px 3px 0 rgba(15, 23, 42, 0.04);
+  --shadow-card-hover: 0 12px 28px -6px rgba(15, 23, 42, 0.1), 0 4px 10px -2px rgba(15, 23, 42, 0.05);
+  --shadow-float: 0 20px 35px -10px rgba(15, 23, 42, 0.15), 0 10px 15px -5px rgba(15, 23, 42, 0.06);
+  --shadow-blue-glow: 0 0 25px rgba(37, 99, 235, 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgba(15, 23, 42, 0.04);
+
+  /* Spacing Scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Transitions & Animation Easing */
+  --transition-fast: 160ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 260ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-smooth: 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
