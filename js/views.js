@@ -126,9 +126,125 @@ const UIController = {
 
   init() {
     this.bindGlobalEvents();
+    this.initTheme();
+    this.initBackupEvents();
     this.updateLiveDate();
     this.switchView('view-dashboard');
     this.updateSidebarStats();
+  },
+
+  initTheme() {
+    const savedTheme = localStorage.getItem('panorama_theme') || 'light';
+    this.applyTheme(savedTheme);
+
+    const toggleBtn = document.getElementById('theme-toggle-btn');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme') || 'light';
+        const nextTheme = current === 'dark' ? 'light' : 'dark';
+        this.applyTheme(nextTheme);
+        localStorage.setItem('panorama_theme', nextTheme);
+        this.showToast(`Switched to ${nextTheme === 'dark' ? 'Midnight Dark' : 'Paper Light'} mode`, 'info');
+      });
+    }
+  },
+
+  applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    const icon = document.getElementById('theme-icon');
+    const label = document.getElementById('theme-label');
+    if (icon && label) {
+      if (theme === 'dark') {
+        icon.textContent = '☀️';
+        label.textContent = 'Light';
+      } else {
+        icon.textContent = '🌙';
+        label.textContent = 'Dark';
+      }
+    }
+  },
+
+  initBackupEvents() {
+    const modal = document.getElementById('modal-backup');
+    const openBtn = document.getElementById('btn-open-backup-modal');
+    const closeBtn = document.getElementById('btn-close-backup-modal');
+    const exportBtn = document.getElementById('btn-export-json');
+    const triggerRestoreBtn = document.getElementById('btn-trigger-restore-file');
+    const restoreInput = document.getElementById('input-restore-file');
+    const resetBtn = document.getElementById('btn-reset-database');
+
+    if (openBtn && modal) openBtn.addEventListener('click', () => modal.classList.add('active'));
+    if (closeBtn && modal) closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+
+    // Export database
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        const dump = {
+          version: '1.0',
+          exportedAt: new Date().toISOString(),
+          subjects: StorageService.getSubjects(),
+          topics: StorageService.getTopics(),
+          tasks: StorageService.getTasks(),
+          dailyPlan: StorageService.getDailyPlan(),
+          progress: StorageService.getProgress()
+        };
+
+        const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `panorama-backup-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.showToast('Backup file downloaded!', 'success');
+      });
+    }
+
+    // Trigger file select
+    if (triggerRestoreBtn && restoreInput) {
+      triggerRestoreBtn.addEventListener('click', () => restoreInput.click());
+      restoreInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const data = JSON.parse(event.target.result);
+            if (data.subjects && Array.isArray(data.subjects)) {
+              localStorage.setItem('panorama_subjects', JSON.stringify(data.subjects));
+              if (data.topics) localStorage.setItem('panorama_topics', JSON.stringify(data.topics));
+              if (data.tasks) localStorage.setItem('panorama_tasks', JSON.stringify(data.tasks));
+              if (data.dailyPlan) localStorage.setItem('panorama_daily_plan', JSON.stringify(data.dailyPlan));
+              if (data.progress) localStorage.setItem('panorama_progress', JSON.stringify(data.progress));
+
+              this.showToast('Database successfully restored!', 'success');
+              if (modal) modal.classList.remove('active');
+              this.switchView(this.currentView);
+              this.updateSidebarStats();
+            } else {
+              alert('Invalid PANORAMA backup file.');
+            }
+          } catch (err) {
+            alert('Error parsing JSON backup file.');
+          }
+        };
+        reader.readAsText(file);
+      });
+    }
+
+    // Wipe and reset database
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to delete all subjects, tasks, and history? This cannot be undone.')) {
+          StorageService.clearAll();
+          if (modal) modal.classList.remove('active');
+          this.showToast('All database records cleared.', 'info');
+          this.switchView('view-dashboard');
+          this.updateSidebarStats();
+        }
+      });
+    }
   },
 
   /* ==========================================================================
@@ -360,6 +476,26 @@ const UIController = {
       ? `Today: ${plan.availableTimeMinutes} minutes available | ${plan.plannedTasks.length} planned study blocks`
       : `Today: ${tasks.filter(t => !t.isCompleted).length} pending tasks | No plan generated yet`;
 
+    // Generate 7-day timeline dates
+    const today = new Date();
+    const timelineDays = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      const dateStr = d.toISOString().split('T')[0];
+      const dayName = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
+      const dayNum = d.getDate();
+      const dueTasks = tasks.filter(t => !t.isCompleted && t.dueDate === dateStr);
+      timelineDays.push({
+        dateStr,
+        dayName,
+        dayNum,
+        isToday: i === 0,
+        dueCount: dueTasks.length,
+        dueTasks
+      });
+    }
+
     let html = `
       <div class="dashboard-grid">
         <!-- Hero Banner -->
@@ -383,6 +519,26 @@ const UIController = {
             <button class="btn btn-accent btn-sm" data-route="view-daily-plan">
               ${plan ? 'View Today\'s Plan' : 'Create Plan'}
             </button>
+          </div>
+        </div>
+
+        <!-- 7-Day Deadline Timeline Strip -->
+        <div class="timeline-strip-container">
+          <div class="timeline-strip-header">
+            <span>📅 Upcoming 7-Day Deadlines</span>
+            <span class="text-caption">${tasks.filter(t => !t.isCompleted).length} pending obligations</span>
+          </div>
+          <div class="timeline-days-grid">
+            ${timelineDays.map(day => `
+              <div class="timeline-day-card ${day.isToday ? 'today' : ''}" data-date="${day.dateStr}" title="${day.dueCount} task(s) due">
+                <span class="timeline-day-name">${day.dayName}</span>
+                <span class="timeline-day-num">${day.dayNum}</span>
+                <div class="timeline-task-dots">
+                  ${day.dueCount > 0 ? Array(Math.min(3, day.dueCount)).fill('<span class="timeline-task-dot"></span>').join('') : '<span style="font-size:10px; color:#94A3B8;">—</span>'}
+                </div>
+                ${day.dueCount > 0 ? `<span class="timeline-day-badge">${day.dueCount} due</span>` : ''}
+              </div>
+            `).join('')}
           </div>
         </div>
 
@@ -490,6 +646,15 @@ const UIController = {
       btn.addEventListener('click', () => {
         const taskId = btn.getAttribute('data-task-id');
         this.openFocusCockpit(taskId);
+      });
+    });
+
+    // Attach Timeline card clicks
+    container.querySelectorAll('.timeline-day-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const dateStr = card.getAttribute('data-date');
+        const count = card.getAttribute('title');
+        this.showToast(`📅 ${dateStr}: ${count}`, 'info');
       });
     });
 
@@ -1286,7 +1451,7 @@ const UIController = {
         </div>
       `;
     } else {
-      planned.forEach(item => {
+      planned.forEach((item, index) => {
         const subject = StorageService.getSubjectById(item.subjectId);
         const topic = StorageService.getTopicById(item.topicId);
         const subjectColor = subject ? subject.color : '#2563EB';
@@ -1294,8 +1459,14 @@ const UIController = {
         const topicName = topic ? topic.name : 'General';
 
         html += `
-          <div class="queue-card ${item.rank === 1 ? 'rank-1' : ''}" id="queue-item-${item.id}">
-            <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
+          <div class="queue-card draggable ${item.rank === 1 ? 'rank-1' : ''}" id="queue-item-${item.id}" draggable="true" data-index="${index}">
+            <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+              <!-- Quick Reorder Up/Down Arrows -->
+              <div class="queue-reorder-controls">
+                <button type="button" class="btn-reorder-arrow btn-move-up" data-index="${index}" title="Move Up" ${index === 0 ? 'disabled style="opacity:0.25; cursor:default;"' : ''}>▲</button>
+                <button type="button" class="btn-reorder-arrow btn-move-down" data-index="${index}" title="Move Down" ${index === planned.length - 1 ? 'disabled style="opacity:0.25; cursor:default;"' : ''}>▼</button>
+              </div>
+
               <div class="priority-rank-badge" style="background-color: ${item.rank === 1 ? 'var(--color-blue-primary)' : 'var(--color-navy-900)'};">
                 ${item.rank}.
               </div>
@@ -1419,6 +1590,78 @@ const UIController = {
       btn.addEventListener('click', () => {
         const taskId = btn.getAttribute('data-task-id');
         this.openFocusCockpit(taskId);
+      });
+    });
+
+    // Native Drag and Drop Reordering
+    let draggedIdx = null;
+    const cards = container.querySelectorAll('.queue-card.draggable');
+
+    cards.forEach(card => {
+      card.addEventListener('dragstart', (e) => {
+        draggedIdx = parseInt(card.getAttribute('data-index'), 10);
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      card.addEventListener('dragend', () => {
+        card.classList.remove('dragging');
+      });
+
+      card.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+      });
+
+      card.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const targetIdx = parseInt(card.getAttribute('data-index'), 10);
+        if (draggedIdx !== null && draggedIdx !== targetIdx && plan.plannedTasks) {
+          const reordered = [...plan.plannedTasks];
+          const [movedItem] = reordered.splice(draggedIdx, 1);
+          reordered.splice(targetIdx, 0, movedItem);
+
+          reordered.forEach((t, i) => { t.rank = i + 1; });
+          plan.plannedTasks = reordered;
+          StorageService.saveDailyPlan(plan);
+          this.showToast('Schedule order updated!', 'info');
+          this.renderDailyPlan();
+        }
+      });
+    });
+
+    // Move Up / Move Down Button Reordering
+    container.querySelectorAll('.btn-move-up').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.getAttribute('data-index'), 10);
+        if (idx > 0 && plan.plannedTasks) {
+          const reordered = [...plan.plannedTasks];
+          const temp = reordered[idx];
+          reordered[idx] = reordered[idx - 1];
+          reordered[idx - 1] = temp;
+          reordered.forEach((t, i) => { t.rank = i + 1; });
+          plan.plannedTasks = reordered;
+          StorageService.saveDailyPlan(plan);
+          this.showToast('Task moved up', 'info');
+          this.renderDailyPlan();
+        }
+      });
+    });
+
+    container.querySelectorAll('.btn-move-down').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.getAttribute('data-index'), 10);
+        if (plan.plannedTasks && idx < plan.plannedTasks.length - 1) {
+          const reordered = [...plan.plannedTasks];
+          const temp = reordered[idx];
+          reordered[idx] = reordered[idx + 1];
+          reordered[idx + 1] = temp;
+          reordered.forEach((t, i) => { t.rank = i + 1; });
+          plan.plannedTasks = reordered;
+          StorageService.saveDailyPlan(plan);
+          this.showToast('Task moved down', 'info');
+          this.renderDailyPlan();
+        }
       });
     });
   },

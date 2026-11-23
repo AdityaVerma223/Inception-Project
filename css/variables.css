@@ -124,3 +124,37 @@
   --transition-spring: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
   --transition-smooth: 500ms cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* ==========================================================================
+   MIDNIGHT ACADEMIC DARK THEME OVERRIDES
+   ========================================================================== */
+[data-theme="dark"] {
+  --color-navy-950: #F8FAFC;        /* Inverted: headings bright white */
+  --color-navy-900: #F1F5F9;        /* Inverted: primary text white/slate */
+  --color-navy-800: #E2E8F0;        /* Inverted: subheadings light */
+  --color-navy-700: #CBD5E1;        /* Inverted: body text light slate */
+  --color-navy-600: #94A3B8;        /* Inverted: muted text */
+  --color-navy-400: #64748B;        /* Inverted: subtle placeholder */
+
+  /* Dark Canvas & Surfaces */
+  --color-bg-canvas: #070B14;       /* Deep obsidian midnight */
+  --color-bg-surface: #0E1626;      /* Rich dark slate card background */
+  --color-bg-subtle: #162032;       /* Inner panels, table headers */
+  --color-bg-hover: #1E293B;        /* Hover row background */
+  --color-bg-glass: rgba(14, 22, 38, 0.92);
+
+  /* Borders */
+  --border-light: #1E293B;
+  --border-medium: #334155;
+  --border-focus: #3B82F6;
+
+  /* Accent Blue */
+  --color-blue-subtle: rgba(37, 99, 235, 0.15);
+  --color-blue-border: #1E40AF;
+
+  /* Card Gradients */
+  --gradient-card-subtle: linear-gradient(180deg, #0E1626 0%, #162032 100%);
+  --shadow-card: 0 4px 14px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 12px 28px rgba(0, 0, 0, 0.6);
+  --shadow-float: 0 20px 40px rgba(0, 0, 0, 0.7);
+}
