@@ -501,43 +501,136 @@
 }
 
 /* ==========================================================================
-   SCREEN 5: FOCUS COCKPIT (STUDY STUDIO)
+   SCREEN 5: FOCUS COCKPIT (STUDY STUDIO WITH TIMER & AMBIENT AUDIO)
    ========================================================================== */
 .focus-cockpit {
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-6);
+  gap: var(--space-5);
 }
 
-.focus-pulse-ring {
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  border: 3px solid var(--color-blue-primary);
+.timer-circle-wrapper {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  margin: 12px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timer-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.timer-circle-bg {
+  fill: none;
+  stroke: var(--color-bg-subtle);
+  stroke-width: 8;
+}
+
+.timer-circle-progress {
+  fill: none;
+  stroke: var(--color-blue-primary);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s ease-out;
+}
+
+.timer-center-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: var(--space-4) auto;
-  position: relative;
-  box-shadow: 0 0 30px rgba(37, 99, 235, 0.25);
-  animation: pulseSoft 3s infinite;
 }
 
-.focus-ring-min {
+.timer-display-digits {
+  font-family: var(--font-family-mono);
   font-size: 2.25rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--color-navy-950);
-  line-height: 1;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
 }
 
-.focus-ring-label {
-  font-size: var(--font-size-xs);
+.timer-status-badge {
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  color: var(--color-navy-400);
+  margin-top: 4px;
+}
+
+.timer-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.btn-timer-primary {
+  min-width: 120px;
+  background: var(--gradient-blue);
+  color: #FFFFFF;
+  border-radius: var(--radius-full);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+}
+
+.btn-timer-primary:hover {
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4);
+}
+
+.btn-timer-primary.running {
+  background: var(--gradient-amber);
+  border-color: #D97706;
+}
+
+.ambient-audio-bar {
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.ambient-pill-btn {
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--color-navy-600);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.ambient-pill-btn:hover {
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--color-navy-900);
+}
+
+.ambient-pill-btn.active {
+  background: #FFFFFF;
+  color: var(--color-blue-primary);
+  border-color: var(--border-medium);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
 }
 
 /* ==========================================================================

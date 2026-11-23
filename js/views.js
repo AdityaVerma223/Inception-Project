@@ -4,11 +4,125 @@
  * the What-If Budget Slider, and the Focus Cockpit.
  */
 
+/**
+ * Web Audio API Procedural Ambient Sound Synthesizer & Notification Chime
+ * Zero external audio files required.
+ */
+const AudioSynth = {
+  ctx: null,
+  activeSource: null,
+  activeGain: null,
+  currentType: 'MUTE',
+
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+  },
+
+  play(type) {
+    this.stop();
+    this.init();
+    if (!this.ctx || type === 'MUTE') {
+      this.currentType = 'MUTE';
+      return;
+    }
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+    this.currentType = type;
+
+    try {
+      const bufferSize = this.ctx.sampleRate * 2;
+      const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+
+      const whiteNoise = this.ctx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+      whiteNoise.loop = true;
+
+      const filter = this.ctx.createBiquadFilter();
+      const gainNode = this.ctx.createGain();
+
+      if (type === 'RAIN') {
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(750, this.ctx.currentTime);
+        gainNode.gain.setValueAtTime(0.12, this.ctx.currentTime);
+      } else if (type === 'WAVES') {
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(420, this.ctx.currentTime);
+        filter.Q.setValueAtTime(1.8, this.ctx.currentTime);
+        gainNode.gain.setValueAtTime(0.14, this.ctx.currentTime);
+      } else if (type === 'WHITE_NOISE') {
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1100, this.ctx.currentTime);
+        gainNode.gain.setValueAtTime(0.06, this.ctx.currentTime);
+      }
+
+      whiteNoise.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(this.ctx.destination);
+
+      whiteNoise.start();
+      this.activeSource = whiteNoise;
+      this.activeGain = gainNode;
+    } catch (e) {
+      console.warn('Audio synthesis note:', e);
+    }
+  },
+
+  stop() {
+    if (this.activeSource) {
+      try { this.activeSource.stop(); } catch (e) {}
+      try { this.activeSource.disconnect(); } catch (e) {}
+      this.activeSource = null;
+    }
+    this.currentType = 'MUTE';
+  },
+
+  playChime() {
+    this.init();
+    if (!this.ctx) return;
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, this.ctx.currentTime); // D5 note
+      osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.3); // A5 note
+
+      gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 1.8);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start();
+      osc.stop(this.ctx.currentTime + 1.8);
+    } catch (e) {
+      console.warn('Chime note:', e);
+    }
+  }
+};
+
 const UIController = {
   currentView: 'view-dashboard',
   selectedSubjectId: null,
   activeFocusTaskId: null,
   taskFilter: 'ALL', // 'ALL' | 'PENDING' | 'COMPLETED'
+  timerState: {
+    interval: null,
+    remainingSeconds: 0,
+    totalSeconds: 0,
+    elapsedSeconds: 0,
+    isRunning: false
+  },
 
   init() {
     this.bindGlobalEvents();
@@ -1256,7 +1370,7 @@ const UIController = {
   },
 
   /* ==========================================================================
-     SCREEN 5: TASK PROGRESS & FOCUS COCKPIT (MODAL)
+     SCREEN 5: TASK PROGRESS & FOCUS COCKPIT (INTERACTIVE TIMER + AMBIENT AUDIO)
      ========================================================================== */
   openFocusCockpit(taskId) {
     this.activeFocusTaskId = taskId;
@@ -1267,11 +1381,32 @@ const UIController = {
     const container = document.getElementById('focus-modal-content');
     if (!modal || !container) return;
 
+    // Reset any running timer
+    if (this.timerState.interval) {
+      clearInterval(this.timerState.interval);
+    }
+    const initialMinutes = parseInt(task.estimatedDuration || 25, 10);
+    this.timerState = {
+      interval: null,
+      remainingSeconds: initialMinutes * 60,
+      totalSeconds: initialMinutes * 60,
+      elapsedSeconds: 0,
+      isRunning: false
+    };
+
     const subject = StorageService.getSubjectById(task.subjectId);
     const topic = StorageService.getTopicById(task.topicId);
     const subjectName = subject ? subject.name : 'General Course';
     const topicName = topic ? topic.name : 'General';
     const currentConf = topic ? topic.confidence : 'MEDIUM';
+
+    const formatTimer = (sec) => {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    };
+
+    const CIRCUMFERENCE = 477.5; // 2 * PI * 76
 
     let html = `
       <div class="focus-cockpit">
@@ -1280,27 +1415,57 @@ const UIController = {
             <span class="badge-subject-dot" style="background-color: ${subject ? subject.color : '#2563EB'};"></span>
             ${subjectName}
           </span>
-          <h2 style="font-size: 1.5rem; margin-top: 4px;">${task.title}</h2>
-          <p class="text-muted" style="font-size: 13px;">Topic: ${topicName} • Type: ${task.type}</p>
+          <h2 style="font-size: 1.4rem; margin-top: 4px;">${task.title}</h2>
+          <p class="text-muted" style="font-size: 13px;">${topicName} • Planned: ${initialMinutes}m</p>
         </div>
 
-        <!-- Ambient Focus Ring -->
-        <div class="focus-pulse-ring">
-          <div class="focus-ring-min">${task.estimatedDuration}</div>
-          <div class="focus-ring-label">Planned Min</div>
+        <!-- SVG Circular Focus Countdown Meter -->
+        <div class="timer-circle-wrapper">
+          <svg class="timer-svg" viewBox="0 0 180 180">
+            <circle class="timer-circle-bg" cx="90" cy="90" r="76"></circle>
+            <circle class="timer-circle-progress" id="timer-progress-ring" cx="90" cy="90" r="76" stroke-dasharray="${CIRCUMFERENCE}" stroke-dashoffset="0"></circle>
+          </svg>
+          <div class="timer-center-content">
+            <div class="timer-display-digits" id="timer-display-text">${formatTimer(this.timerState.remainingSeconds)}</div>
+            <div class="timer-status-badge" id="timer-status-badge">Ready to Focus</div>
+          </div>
         </div>
 
-        <div style="width: 100%; max-width: 380px; text-align: left;">
+        <!-- Timer Controls Row -->
+        <div class="timer-controls-row">
+          <button type="button" class="btn btn-timer-primary" id="btn-timer-toggle">
+            ▶ Start Timer
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-timer-reset" title="Reset timer">
+            ↺ Reset
+          </button>
+        </div>
+
+        <!-- Ambient Sound Generator Bar -->
+        <div class="ambient-audio-bar">
+          <span style="font-size: 11px; font-weight: 700; color: var(--color-navy-600); text-transform: uppercase;">Audio:</span>
+          <div style="display: flex; gap: 4px;">
+            <button type="button" class="ambient-pill-btn active" data-ambient="MUTE">🔇 Mute</button>
+            <button type="button" class="ambient-pill-btn" data-ambient="RAIN">🌧️ Rain</button>
+            <button type="button" class="ambient-pill-btn" data-ambient="WAVES">🌊 Waves</button>
+            <button type="button" class="ambient-pill-btn" data-ambient="WHITE_NOISE">💨 White Noise</button>
+          </div>
+        </div>
+
+        <div style="width: 100%; max-width: 400px; text-align: left; margin-top: 8px;">
           <!-- Actual Time Spent -->
-          <div class="form-group">
-            <label class="form-label" for="focus-actual-time">Actual Time Spent (minutes):</label>
-            <input type="number" id="focus-actual-time" class="form-control" value="${task.estimatedDuration}" min="5" max="480" />
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label" for="focus-actual-time">
+              <span>Actual Time Logged (minutes):</span>
+              <span class="text-caption" id="focus-live-mins">Tracking...</span>
+            </label>
+            <input type="number" id="focus-actual-time" class="form-control" value="${initialMinutes}" min="1" max="480" />
           </div>
 
           <!-- Update Topic Confidence Post-Study -->
           ${topic ? `
-            <div class="form-group">
-              <label class="form-label">How confident do you feel after this session?</label>
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label class="form-label">Confidence after this session:</label>
               <div class="conf-selector" id="focus-conf-selector" style="width: 100%;">
                 <button type="button" class="conf-pill-btn ${currentConf === 'LOW' ? 'active' : ''}" data-conf="LOW" style="flex: 1;">Low</button>
                 <button type="button" class="conf-pill-btn ${currentConf === 'MEDIUM' ? 'active' : ''}" data-conf="MEDIUM" style="flex: 1;">Medium</button>
@@ -1309,12 +1474,12 @@ const UIController = {
             </div>
           ` : ''}
 
-          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 24px;">
+          <div style="display: flex; flex-direction: column; gap: 8px;">
             <button class="btn btn-primary" id="btn-focus-complete" style="width: 100%;">
               ✔ MARK AS COMPLETE & RECORD PROGRESS
             </button>
-            <button class="btn btn-secondary" id="btn-focus-close" style="width: 100%;">
-              BACK TO PLAN
+            <button class="btn btn-secondary btn-sm" id="btn-focus-close" style="width: 100%;">
+              Back to Plan
             </button>
           </div>
         </div>
@@ -1324,7 +1489,88 @@ const UIController = {
     container.innerHTML = html;
     modal.classList.add('active');
 
-    // Conf selector
+    const timerDisplay = container.querySelector('#timer-display-text');
+    const timerStatus = container.querySelector('#timer-status-badge');
+    const timerProgress = container.querySelector('#timer-progress-ring');
+    const timerToggleBtn = container.querySelector('#btn-timer-toggle');
+    const timerResetBtn = container.querySelector('#btn-timer-reset');
+    const actualTimeInput = container.querySelector('#focus-actual-time');
+    const liveMinsCaption = container.querySelector('#focus-live-mins');
+
+    const updateTimerUI = () => {
+      timerDisplay.textContent = formatTimer(this.timerState.remainingSeconds);
+      const ratio = Math.max(0, this.timerState.remainingSeconds / this.timerState.totalSeconds);
+      const offset = CIRCUMFERENCE * (1 - ratio);
+      timerProgress.style.strokeDashoffset = offset;
+
+      const mins = Math.max(1, Math.round(this.timerState.elapsedSeconds / 60));
+      if (this.timerState.elapsedSeconds > 0) {
+        actualTimeInput.value = mins;
+        liveMinsCaption.textContent = `${mins}m elapsed`;
+      }
+    };
+
+    // Start / Pause Timer
+    timerToggleBtn.addEventListener('click', () => {
+      if (this.timerState.isRunning) {
+        // PAUSE
+        clearInterval(this.timerState.interval);
+        this.timerState.isRunning = false;
+        timerToggleBtn.textContent = '▶ Resume Timer';
+        timerToggleBtn.classList.remove('running');
+        timerStatus.textContent = 'Paused';
+      } else {
+        // START / RESUME
+        this.timerState.isRunning = true;
+        timerToggleBtn.textContent = '⏸ Pause Timer';
+        timerToggleBtn.classList.add('running');
+        timerStatus.textContent = 'Focusing...';
+
+        this.timerState.interval = setInterval(() => {
+          if (this.timerState.remainingSeconds > 0) {
+            this.timerState.remainingSeconds--;
+            this.timerState.elapsedSeconds++;
+            updateTimerUI();
+          } else {
+            // FINISHED!
+            clearInterval(this.timerState.interval);
+            this.timerState.isRunning = false;
+            timerToggleBtn.textContent = '▶ Start Timer';
+            timerToggleBtn.classList.remove('running');
+            timerStatus.textContent = 'Time Up!';
+
+            AudioSynth.stop();
+            AudioSynth.playChime();
+            this.triggerConfetti();
+            this.showToast('Study block completed! Awesome focus session.', 'success');
+          }
+        }, 1000);
+      }
+    });
+
+    // Reset Timer
+    timerResetBtn.addEventListener('click', () => {
+      if (this.timerState.interval) clearInterval(this.timerState.interval);
+      this.timerState.isRunning = false;
+      this.timerState.remainingSeconds = initialMinutes * 60;
+      this.timerState.elapsedSeconds = 0;
+      timerToggleBtn.textContent = '▶ Start Timer';
+      timerToggleBtn.classList.remove('running');
+      timerStatus.textContent = 'Ready to Focus';
+      updateTimerUI();
+    });
+
+    // Ambient Audio Buttons
+    container.querySelectorAll('.ambient-pill-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        container.querySelectorAll('.ambient-pill-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const soundType = btn.getAttribute('data-ambient');
+        AudioSynth.play(soundType);
+      });
+    });
+
+    // Post-study confidence selector
     let selectedPostConf = currentConf;
     container.querySelectorAll('#focus-conf-selector .conf-pill-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1334,17 +1580,25 @@ const UIController = {
       });
     });
 
+    const cleanupModal = () => {
+      if (this.timerState.interval) clearInterval(this.timerState.interval);
+      this.timerState.isRunning = false;
+      AudioSynth.stop();
+      modal.classList.remove('active');
+    };
+
     // Mark complete action
     const completeBtn = container.querySelector('#btn-focus-complete');
     if (completeBtn) {
       completeBtn.addEventListener('click', () => {
-        const timeSpent = parseInt(container.querySelector('#focus-actual-time').value, 10) || task.estimatedDuration;
+        const timeSpent = parseInt(actualTimeInput.value, 10) || initialMinutes;
         StorageService.recordStudySession(taskId, timeSpent, selectedPostConf);
 
+        AudioSynth.playChime();
         this.triggerConfetti();
         this.showToast(`Completed "${task.title}"! Study log recorded.`, 'success');
 
-        modal.classList.remove('active');
+        cleanupModal();
         this.switchView('view-daily-plan');
       });
     }
@@ -1352,9 +1606,7 @@ const UIController = {
     // Close action
     const closeBtn = container.querySelector('#btn-focus-close');
     if (closeBtn) {
-      closeBtn.addEventListener('click', () => {
-        modal.classList.remove('active');
-      });
+      closeBtn.addEventListener('click', cleanupModal);
     }
   },
 
