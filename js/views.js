@@ -975,6 +975,31 @@ const UIController = {
                   <span class="duration-chip">${task.estimatedDuration}m</span>
                   <span class="rationale-tag ${urgency.score >= 85 ? 'due-soon' : ''}">Due: ${task.dueDate} (${urgency.label})</span>
                 </div>
+
+                <!-- SUBTASKS / CHECKLIST -->
+                ${task.subtasks && task.subtasks.length > 0 ? `
+                  <div class="subtasks-container">
+                    <div class="subtasks-header">
+                      <span>Actionable Steps (${task.subtasks.filter(s => s.isDone).length}/${task.subtasks.length})</span>
+                      <span class="subtask-progress-mini">${Math.round(task.subtasks.filter(s => s.isDone).length / task.subtasks.length * 100)}% done</span>
+                    </div>
+                    <div>
+                      ${task.subtasks.map(st => `
+                        <div class="subtask-item-row">
+                          <div class="subtask-checkbox ${st.isDone ? 'checked' : ''}" data-task-id="${task.id}" data-subtask-id="${st.id}">
+                            ${st.isDone ? '✔' : ''}
+                          </div>
+                          <span class="subtask-text ${st.isDone ? 'checked' : ''}">${st.text}</span>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                ` : ''}
+
+                <!-- Inline Quick Add Step -->
+                <div class="subtask-add-row">
+                  <input type="text" class="form-control subtask-mini-input input-add-subtask" placeholder="+ Add a step & hit Enter..." data-task-id="${task.id}" />
+                </div>
               </div>
             </div>
 
@@ -1098,6 +1123,35 @@ const UIController = {
         }
         this.renderTasks();
         this.updateSidebarStats();
+      });
+    });
+
+    // Subtask checkbox toggling
+    container.querySelectorAll('.subtask-checkbox').forEach(box => {
+      box.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const taskId = box.getAttribute('data-task-id');
+        const stId = box.getAttribute('data-subtask-id');
+        const result = StorageService.toggleSubtask(taskId, stId);
+        if (result && result.subtask.isDone) {
+          this.showToast(`Step "${result.subtask.text}" checked off!`, 'success');
+        }
+        this.renderTasks();
+      });
+    });
+
+    // Subtask quick add on Enter
+    container.querySelectorAll('.input-add-subtask').forEach(input => {
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const taskId = input.getAttribute('data-task-id');
+          const text = input.value.trim();
+          if (text) {
+            StorageService.addSubtask(taskId, text);
+            this.showToast('Step added', 'info');
+            this.renderTasks();
+          }
+        }
       });
     });
 
@@ -1452,7 +1506,27 @@ const UIController = {
           </div>
         </div>
 
-        <div style="width: 100%; max-width: 400px; text-align: left; margin-top: 8px;">
+        <!-- Actionable Subtask Steps Checklist in Cockpit -->
+        ${task.subtasks && task.subtasks.length > 0 ? `
+          <div style="width: 100%; max-width: 400px; text-align: left; background: var(--color-bg-subtle); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border-light); margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--color-navy-600); text-transform: uppercase; margin-bottom: 8px;">
+              <span>Focus Checklist Steps</span>
+              <span style="color: var(--color-blue-primary);" id="cockpit-subtask-progress">${task.subtasks.filter(s => s.isDone).length}/${task.subtasks.length} Done</span>
+            </div>
+            <div id="cockpit-subtasks-list">
+              ${task.subtasks.map(st => `
+                <div class="subtask-item-row" style="padding: 3px 0;">
+                  <div class="subtask-checkbox cockpit-subtask-box ${st.isDone ? 'checked' : ''}" data-task-id="${task.id}" data-subtask-id="${st.id}">
+                    ${st.isDone ? '✔' : ''}
+                  </div>
+                  <span class="subtask-text ${st.isDone ? 'checked' : ''}">${st.text}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <div style="width: 100%; max-width: 400px; text-align: left; margin-top: 4px;">
           <!-- Actual Time Spent -->
           <div class="form-group" style="margin-bottom: 12px;">
             <label class="form-label" for="focus-actual-time">
@@ -1577,6 +1651,28 @@ const UIController = {
         container.querySelectorAll('#focus-conf-selector .conf-pill-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         selectedPostConf = btn.getAttribute('data-conf');
+      });
+    });
+
+    // Cockpit subtask checklist toggles
+    container.querySelectorAll('.cockpit-subtask-box').forEach(box => {
+      box.addEventListener('click', () => {
+        const tId = box.getAttribute('data-task-id');
+        const stId = box.getAttribute('data-subtask-id');
+        const result = StorageService.toggleSubtask(tId, stId);
+        if (result) {
+          box.classList.toggle('checked', result.subtask.isDone);
+          box.innerHTML = result.subtask.isDone ? '✔' : '';
+          const textEl = box.nextElementSibling;
+          if (textEl) textEl.classList.toggle('checked', result.subtask.isDone);
+
+          const updatedTask = StorageService.getTaskById(tId);
+          const progEl = container.querySelector('#cockpit-subtask-progress');
+          if (progEl && updatedTask && updatedTask.subtasks) {
+            const doneCount = updatedTask.subtasks.filter(s => s.isDone).length;
+            progEl.textContent = `${doneCount}/${updatedTask.subtasks.length} Done`;
+          }
+        }
       });
     });
 

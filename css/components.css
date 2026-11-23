@@ -353,6 +353,82 @@ select.form-control {
 }
 
 /* ==========================================================================
+   SUBTASKS & ACTIONABLE CHECKLISTS
+   ========================================================================== */
+.subtasks-container {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-light);
+  width: 100%;
+}
+
+.subtasks-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-navy-400);
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+
+.subtask-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--color-navy-700);
+  transition: all var(--transition-fast);
+}
+
+.subtask-checkbox {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--border-medium);
+  background-color: #FFFFFF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.subtask-checkbox.checked {
+  background-color: var(--color-blue-primary);
+  border-color: var(--color-blue-primary);
+  color: #FFFFFF;
+}
+
+.subtask-text.checked {
+  text-decoration: line-through;
+  color: var(--color-navy-400);
+}
+
+.subtask-add-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.subtask-mini-input {
+  height: 30px;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+.subtask-progress-mini {
+  font-size: 11px;
+  color: var(--color-blue-primary);
+  font-weight: 600;
+}
+
+/* ==========================================================================
    PROGRESS METERS & BARS
    ========================================================================== */
 .meter-container {

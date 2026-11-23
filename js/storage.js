@@ -192,6 +192,47 @@ const StorageService = {
   },
 
   /* ==========================================================================
+     SUBTASKS & ACTIONABLE CHECKLISTS
+     ========================================================================== */
+  toggleSubtask(taskId, subtaskId) {
+    const tasks = this.getTasks();
+    const task = tasks.find(t => t.id === taskId);
+    if (task && task.subtasks) {
+      const st = task.subtasks.find(s => s.id === subtaskId);
+      if (st) {
+        st.isDone = !st.isDone;
+        this.set(STORAGE_KEYS.TASKS, tasks);
+        return { task, subtask: st };
+      }
+    }
+    return null;
+  },
+
+  addSubtask(taskId, text) {
+    const tasks = this.getTasks();
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      if (!task.subtasks) task.subtasks = [];
+      const newSt = { id: `st-${Date.now()}-${Math.floor(Math.random() * 1000)}`, text, isDone: false };
+      task.subtasks.push(newSt);
+      this.set(STORAGE_KEYS.TASKS, tasks);
+      return newSt;
+    }
+    return null;
+  },
+
+  deleteSubtask(taskId, subtaskId) {
+    const tasks = this.getTasks();
+    const task = tasks.find(t => t.id === taskId);
+    if (task && task.subtasks) {
+      task.subtasks = task.subtasks.filter(s => s.id !== subtaskId);
+      this.set(STORAGE_KEYS.TASKS, tasks);
+      return true;
+    }
+    return false;
+  },
+
+  /* ==========================================================================
      DAILY PLAN
      ========================================================================== */
   getDailyPlan() {
@@ -278,7 +319,12 @@ const StorageService = {
         estimatedDuration: 45,
         importance: 'HIGH',
         isCompleted: false,
-        createdAt: Date.now() - 50000
+        createdAt: Date.now() - 50000,
+        subtasks: [
+          { id: 'st-101', text: 'Review binary search tree invariants', isDone: true },
+          { id: 'st-102', text: 'Implement insertion and deletion functions', isDone: false },
+          { id: 'st-103', text: 'Test on edge cases (empty tree, skewed tree)', isDone: false }
+        ]
       },
       {
         id: 'task-302',
@@ -290,7 +336,11 @@ const StorageService = {
         estimatedDuration: 40,
         importance: 'HIGH',
         isCompleted: false,
-        createdAt: Date.now() - 40000
+        createdAt: Date.now() - 40000,
+        subtasks: [
+          { id: 'st-201', text: 'Review limit definitions and L\'Hôpital\'s rule', isDone: false },
+          { id: 'st-202', text: 'Solve 5 chain rule practice problems', isDone: false }
+        ]
       },
       {
         id: 'task-303',
@@ -302,7 +352,11 @@ const StorageService = {
         estimatedDuration: 30,
         importance: 'MEDIUM',
         isCompleted: false,
-        createdAt: Date.now() - 30000
+        createdAt: Date.now() - 30000,
+        subtasks: [
+          { id: 'st-301', text: 'Calculate error margins and plot graph', isDone: true },
+          { id: 'st-302', text: 'Write discussion and conclusion section', isDone: false }
+        ]
       },
       {
         id: 'task-304',
@@ -314,7 +368,11 @@ const StorageService = {
         estimatedDuration: 45,
         importance: 'MEDIUM',
         isCompleted: false,
-        createdAt: Date.now() - 20000
+        createdAt: Date.now() - 20000,
+        subtasks: [
+          { id: 'st-401', text: 'Draw mechanism for nucleophilic substitution', isDone: false },
+          { id: 'st-402', text: 'Solve end-of-chapter practice questions', isDone: false }
+        ]
       },
       {
         id: 'task-305',
@@ -326,7 +384,11 @@ const StorageService = {
         estimatedDuration: 30,
         importance: 'LOW',
         isCompleted: false,
-        createdAt: Date.now() - 10000
+        createdAt: Date.now() - 10000,
+        subtasks: [
+          { id: 'st-501', text: 'Formulate primary thesis statement', isDone: true },
+          { id: 'st-502', text: 'Select 3 textual citations', isDone: false }
+        ]
       }
     ];
 
