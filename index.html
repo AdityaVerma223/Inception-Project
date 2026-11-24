@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PANORAMA — Personalised Study Planning and Prioritisation</title>
   
+  <!-- Content Security Policy: Only self, Google Fonts, and Supabase -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: https:; object-src 'none'; base-uri 'self';">
+
   <!-- Google Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,8 +18,27 @@
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/views.css">
+  <link rel="stylesheet" href="css/auth.css">
 </head>
 <body>
+  <!-- Offline Read-Only Banner -->
+  <div id="offline-banner" role="status" aria-live="polite">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="1" y1="1" x2="23" y2="23"></line>
+      <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+      <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+      <path d="M10.71 5.05A16 16 0 0 1 22.56 9"></path>
+      <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+      <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+      <line x1="12" y1="20" x2="12.01" y2="20"></line>
+    </svg>
+    <span>Offline Mode — Network disconnected. Showing cached study schedule (Read-Only).</span>
+  </div>
+
+  <!-- AUTHENTICATION SHELL (Split-Screen Login, Sign Up, Password Reset) -->
+  <div id="auth-shell" style="display: none;"></div>
+
+  <!-- MAIN APPLICATION SHELL -->
   <div id="app-shell">
     
     <!-- DESKTOP FIXED SIDEBAR (260px) -->
@@ -34,11 +56,14 @@
             <span class="brand-title">PANORAMA</span>
           </div>
           <span class="brand-tagline">"From scattered pieces to the bigger picture."</span>
+
+          <!-- User / Mode Pill Indicator -->
+          <div id="sidebar-user-pill" style="margin-top: 10px;"></div>
         </div>
 
         <!-- Sidebar Navigation Links -->
         <nav class="sidebar-nav">
-          <a class="nav-link active" data-view="view-dashboard">
+          <a class="nav-link active" data-view="view-dashboard" href="#/app/dashboard">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="3" width="7" height="7"></rect>
               <rect x="14" y="3" width="7" height="7"></rect>
@@ -48,7 +73,7 @@
             Dashboard
           </a>
 
-          <a class="nav-link" data-view="view-subjects">
+          <a class="nav-link" data-view="view-subjects" href="#/app/subjects">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
@@ -56,7 +81,7 @@
             My Subjects
           </a>
 
-          <a class="nav-link" data-view="view-tasks">
+          <a class="nav-link" data-view="view-tasks" href="#/app/tasks">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 11l3 3L22 4"></path>
               <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
@@ -64,7 +89,7 @@
             Academic Tasks
           </a>
 
-          <a class="nav-link" data-view="view-daily-plan">
+          <a class="nav-link" data-view="view-daily-plan" href="#/app/plan">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
@@ -72,13 +97,21 @@
             Daily Plan
           </a>
 
-          <a class="nav-link" data-view="view-progress">
+          <a class="nav-link" data-view="view-progress" href="#/app/progress">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="20" x2="18" y2="10"></line>
               <line x1="12" y1="20" x2="12" y2="4"></line>
               <line x1="6" y1="20" x2="6" y2="14"></line>
             </svg>
             My Progress
+          </a>
+
+          <a class="nav-link" data-view="view-settings" href="#/app/settings">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Settings
           </a>
         </nav>
       </div>
@@ -89,6 +122,9 @@
           <div class="sidebar-status-label">Today's Study Load</div>
           <div class="sidebar-status-val" id="sidebar-status-val">Loading...</div>
         </div>
+
+        <!-- Auth Action (Logout or Switch to Cloud) -->
+        <div id="sidebar-auth-action" style="margin-top: 12px;"></div>
       </div>
     </aside>
 
@@ -150,12 +186,17 @@
           <div id="progress-content"></div>
         </section>
 
+        <!-- Screen 7: Settings & Cloud Sync -->
+        <section class="view-panel" id="view-settings">
+          <div id="settings-content"></div>
+        </section>
+
       </div>
     </main>
 
     <!-- MOBILE FIXED BOTTOM NAVIGATION BAR (< 768px) -->
     <nav class="mobile-bottom-nav">
-      <a class="mobile-nav-item active" data-view="view-dashboard">
+      <a class="mobile-nav-item active" data-view="view-dashboard" href="#/app/dashboard">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="3" width="7" height="7"></rect>
           <rect x="14" y="3" width="7" height="7"></rect>
@@ -165,7 +206,7 @@
         <span>Home</span>
       </a>
 
-      <a class="mobile-nav-item" data-view="view-subjects">
+      <a class="mobile-nav-item" data-view="view-subjects" href="#/app/subjects">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
           <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
@@ -173,7 +214,7 @@
         <span>Subjects</span>
       </a>
 
-      <a class="mobile-nav-item" data-view="view-tasks">
+      <a class="mobile-nav-item" data-view="view-tasks" href="#/app/tasks">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M9 11l3 3L22 4"></path>
           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
@@ -181,21 +222,20 @@
         <span>Tasks</span>
       </a>
 
-      <a class="mobile-nav-item" data-view="view-daily-plan">
+      <a class="mobile-nav-item" data-view="view-daily-plan" href="#/app/plan">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"></circle>
           <polyline points="12 6 12 12 16 14"></polyline>
         </svg>
-        <span>Daily Plan</span>
+        <span>Plan</span>
       </a>
 
-      <a class="mobile-nav-item" data-view="view-progress">
+      <a class="mobile-nav-item" data-view="view-settings" href="#/app/settings">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="20" x2="18" y2="10"></line>
-          <line x1="12" y1="20" x2="12" y2="4"></line>
-          <line x1="6" y1="20" x2="6" y2="14"></line>
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
         </svg>
-        <span>Progress</span>
+        <span>Settings</span>
       </a>
     </nav>
 
@@ -237,7 +277,7 @@
 
           <div style="padding: 14px; border: 1px dashed var(--confidence-low-border); border-radius: var(--radius-md); background: var(--confidence-low-bg);">
             <h4 style="font-size: 13px; color: var(--confidence-low-text); margin-bottom: 4px;">Reset All Data</h4>
-            <p class="text-muted" style="font-size: 12px; margin-bottom: 8px;">Clear all subjects and tasks to start completely fresh.</p>
+            <p class="text-muted" style="font-size: 12px; margin-bottom: 8px;">Clear all local subjects and tasks to start completely fresh.</p>
             <button class="btn btn-danger-ghost" id="btn-reset-database" style="font-weight: 700; border: 1px solid var(--confidence-low-border); background: #FFFFFF;">
               ⚠️ Wipe Everything & Reset
             </button>
@@ -254,10 +294,26 @@
 
   </div>
 
-  <!-- JavaScript Modules -->
+  <!-- JavaScript Modules in Dependency Order -->
+  <!-- 1. Vendored Supabase Client (No runtime CDN dependency) -->
+  <script src="js/vendor/supabase.js"></script>
+  <!-- 2. Application Config (Supabase URL, Anon Key, Feature Flags) -->
+  <script src="js/config.js"></script>
+  <!-- 3. Local Partitioned Storage Service (Guest Mode & Sample Seeder) -->
   <script src="js/storage.js"></script>
+  <!-- 4. Supabase Auth Controller & Guest Session Management -->
+  <script src="js/auth.js"></script>
+  <!-- 5. Unified Data Store Facade (Single Source of Truth, Caching, Sync) -->
+  <script src="js/data/store.js"></script>
+  <!-- 6. Urgency × Weight × Confidence Prioritisation Engine -->
   <script src="js/engine.js"></script>
+  <!-- 7. Authentication UI Controller (Split-screen, floating labels, validation) -->
+  <script src="js/auth-ui.js"></script>
+  <!-- 8. Hash Router & Protected Route Guards -->
+  <script src="js/router.js"></script>
+  <!-- 9. Application UI Controller & Views -->
   <script src="js/views.js"></script>
+  <!-- 10. Bootstrap -->
   <script src="js/app.js"></script>
 </body>
 </html>

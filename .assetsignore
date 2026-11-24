@@ -1,0 +1,11 @@
+.git/
+.github/
+.gitignore
+.DS_Store
+*.md
+supabase/
+scratch/
+node_modules/
+.wrangler/
+package*.json
+wrangler.jsonc

@@ -1,0 +1,23 @@
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Secrets & Environment Variables
+.env
+.env.*
+*.local
+*.key
+*.pem
+*.secret
+
+# Scratch & Local Notes
+scratch/
+notes/
+*.tmp
+*.log
+
+# Node & Build artifacts (if any tools are run)
+node_modules/
+.wrangler/
+dist/
+.cache/

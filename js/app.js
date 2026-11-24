@@ -1,17 +1,24 @@
 /**
  * PANORAMA — Main Application Entry Point
- * Initializes application modules, verifies storage integrity,
- * and boots the UI controller.
+ * 
+ * Boots the auth session, initializes the unified data store facade,
+ * activates the hash router, and mounts the UI controller.
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Check if first-run: if completely empty, populate initial sample dataset so
-  // reviewer / user immediately experiences the full interactive application!
-  const existingSubjects = StorageService.getSubjects();
-  if (!existingSubjects || existingSubjects.length === 0) {
-    StorageService.loadSampleData();
-  }
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    // 1. Initialize Authentication session (Supabase Auth / Guest session)
+    await AuthService.init();
 
-  // Initialize UI Controller
-  UIController.init();
+    // 2. Initialize Data Store Facade (Offline cache & sync)
+    await Store.init();
+
+    // 3. Initialize UI Controller
+    UIController.init();
+
+    // 4. Initialize Hash Router (Guards protected routes and displays active view)
+    Router.init();
+  } catch (err) {
+    console.error('[PANORAMA Bootstrap Error]:', err);
+  }
 });

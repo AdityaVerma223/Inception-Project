@@ -1,8 +1,19 @@
 /**
  * PANORAMA — UI Views Controller & Interactive Component Renderer
- * Handles DOM rendering for Screens 1 to 6, view routing, micro-animations,
+ * Handles DOM rendering for Screens 1 to 7, view routing, micro-animations,
  * the What-If Budget Slider, and the Focus Cockpit.
  */
+
+// Global XSS Sanitization Helper for rendering user-supplied strings
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 /**
  * Web Audio API Procedural Ambient Sound Synthesizer & Notification Chime
@@ -129,8 +140,20 @@ const UIController = {
     this.initTheme();
     this.initBackupEvents();
     this.updateLiveDate();
+    this.updateSidebarAuth();
     this.switchView('view-dashboard');
     this.updateSidebarStats();
+
+    if (typeof AuthService !== 'undefined' && AuthService.onAuthStateChange) {
+      AuthService.onAuthStateChange(() => {
+        this.updateSidebarAuth();
+        this.updateSidebarStats();
+      });
+    }
+  },
+
+  renderActiveView(viewId) {
+    this.switchView(viewId);
   },
 
   initTheme() {
@@ -182,11 +205,11 @@ const UIController = {
         const dump = {
           version: '1.0',
           exportedAt: new Date().toISOString(),
-          subjects: StorageService.getSubjects(),
-          topics: StorageService.getTopics(),
-          tasks: StorageService.getTasks(),
-          dailyPlan: StorageService.getDailyPlan(),
-          progress: StorageService.getProgress()
+          subjects: Store.getSubjects(),
+          topics: Store.getTopics(),
+          tasks: Store.getTasks(),
+          dailyPlan: Store.getDailyPlan(),
+          progress: Store.getProgress()
         };
 
         const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
@@ -237,7 +260,7 @@ const UIController = {
     if (resetBtn) {
       resetBtn.addEventListener('click', () => {
         if (confirm('Are you sure you want to delete all subjects, tasks, and history? This cannot be undone.')) {
-          StorageService.clearAll();
+          Store.clearAll();
           if (modal) modal.classList.remove('active');
           this.showToast('All database records cleared.', 'info');
           this.switchView('view-dashboard');
@@ -291,8 +314,8 @@ const UIController = {
   updateSidebarStats() {
     const valEl = document.getElementById('sidebar-status-val');
     if (valEl) {
-      const plan = StorageService.getDailyPlan();
-      const tasks = StorageService.getTasks().filter(t => !t.isCompleted);
+      const plan = Store.getDailyPlan();
+      const tasks = Store.getTasks().filter(t => !t.isCompleted);
       if (plan && plan.plannedTasks && plan.plannedTasks.length > 0) {
         valEl.textContent = `Today: ${plan.availableTimeMinutes}m | ${plan.plannedTasks.length} tasks ready`;
       } else {
@@ -343,6 +366,9 @@ const UIController = {
       case 'view-progress':
         this.renderProgress();
         break;
+      case 'view-settings':
+        this.renderSettings();
+        break;
     }
 
     this.updateSidebarStats();
@@ -358,7 +384,8 @@ const UIController = {
       'view-subjects': 'Subjects <span class="text-muted">/</span> <span class="crumb-active">Topic setup</span>',
       'view-tasks': 'Tasks <span class="text-muted">/</span> <span class="crumb-active">Inventory & Setup</span>',
       'view-daily-plan': 'Daily plan <span class="text-muted">/</span> <span class="crumb-active">Recommended order</span>',
-      'view-progress': 'Progress <span class="text-muted">/</span> <span class="crumb-active">Overview</span>'
+      'view-progress': 'Progress <span class="text-muted">/</span> <span class="crumb-active">Overview</span>',
+      'view-settings': 'Preferences <span class="text-muted">/</span> <span class="crumb-active">Settings</span>'
     };
 
     crumbEl.innerHTML = breadcrumbMap[viewId] || 'PANORAMA';
@@ -448,10 +475,10 @@ const UIController = {
     const container = document.getElementById('dashboard-content');
     if (!container) return;
 
-    const subjects = StorageService.getSubjects();
-    const tasks = StorageService.getTasks();
-    const topics = StorageService.getTopics();
-    const plan = StorageService.getDailyPlan();
+    const subjects = Store.getSubjects();
+    const tasks = Store.getTasks();
+    const topics = Store.getTopics();
+    const plan = Store.getDailyPlan();
 
     // Time-based greeting
     const hour = new Date().getHours();
@@ -501,7 +528,7 @@ const UIController = {
         <!-- Hero Banner -->
         <div class="hero-banner">
           <h1 class="hero-greeting">${greeting}</h1>
-          <p class="hero-subtitle">Your study plan at a glance</p>
+          <p class="hero-subtitle">Not just when it's due. When to start, and how long.</p>
 
           <div class="capacity-card">
             <div class="capacity-stat-group">
@@ -570,8 +597,8 @@ const UIController = {
       `;
     } else {
       topTasks.forEach((item, index) => {
-        const subject = StorageService.getSubjectById(item.subjectId);
-        const topic = StorageService.getTopicById(item.topicId);
+        const subject = Store.getSubjectById(item.subjectId);
+        const topic = Store.getTopicById(item.topicId);
         const subjectColor = subject ? subject.color : '#2563EB';
         const subjectName = subject ? subject.name : 'General';
         const topicName = topic ? topic.name : 'General';
@@ -669,7 +696,7 @@ const UIController = {
   },
 
   handleLoadDemoData() {
-    StorageService.loadSampleData();
+    Store.loadSampleData();
     this.showToast('Sample academic dataset loaded successfully!', 'success');
     this.renderDashboard();
     this.updateSidebarStats();
@@ -682,8 +709,8 @@ const UIController = {
     const container = document.getElementById('subjects-content');
     if (!container) return;
 
-    const subjects = StorageService.getSubjects();
-    const allTopics = StorageService.getTopics();
+    const subjects = Store.getSubjects();
+    const allTopics = Store.getTopics();
 
     // Set active subject if not set
     if (!this.selectedSubjectId && subjects.length > 0) {
@@ -691,7 +718,7 @@ const UIController = {
     }
 
     const activeSubject = subjects.find(s => s.id === this.selectedSubjectId) || subjects[0] || null;
-    const activeTopics = activeSubject ? StorageService.getTopicsBySubject(activeSubject.id) : [];
+    const activeTopics = activeSubject ? Store.getTopicsBySubject(activeSubject.id) : [];
 
     let html = `
       <div class="section-header">
@@ -888,7 +915,7 @@ const UIController = {
           return;
         }
         const color = subjColorInput ? subjColorInput.value : '#2563EB';
-        const newSubj = StorageService.saveSubject({ name, color });
+        const newSubj = Store.saveSubject({ name, color });
         this.selectedSubjectId = newSubj.id;
         this.showToast(`Subject "${name}" added`, 'success');
         this.renderSubjects();
@@ -906,7 +933,7 @@ const UIController = {
         e.stopPropagation();
         const id = btn.getAttribute('data-subject-id');
         if (confirm('Delete this subject? This will also remove its associated topics and tasks.')) {
-          StorageService.deleteSubject(id);
+          Store.deleteSubject(id);
           this.selectedSubjectId = null;
           this.showToast('Subject deleted', 'info');
           this.renderSubjects();
@@ -938,7 +965,7 @@ const UIController = {
         }
         if (!this.selectedSubjectId) return;
 
-        StorageService.saveTopic({
+        Store.saveTopic({
           subjectId: this.selectedSubjectId,
           name,
           confidence: chosenInitialConf
@@ -959,7 +986,7 @@ const UIController = {
       btn.addEventListener('click', () => {
         const topicId = btn.getAttribute('data-topic-id');
         const conf = btn.getAttribute('data-conf');
-        StorageService.updateTopicConfidence(topicId, conf);
+        Store.updateTopicConfidence(topicId, conf);
         this.showToast(`Confidence updated to ${conf}`, 'info');
         this.renderSubjects();
       });
@@ -970,7 +997,7 @@ const UIController = {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-topic-id');
         if (confirm('Delete this topic?')) {
-          StorageService.deleteTopic(id);
+          Store.deleteTopic(id);
           this.showToast('Topic deleted', 'info');
           this.renderSubjects();
         }
@@ -985,9 +1012,9 @@ const UIController = {
     const container = document.getElementById('tasks-content');
     if (!container) return;
 
-    const subjects = StorageService.getSubjects();
-    const allTopics = StorageService.getTopics();
-    const tasks = StorageService.getTasks();
+    const subjects = Store.getSubjects();
+    const allTopics = Store.getTopics();
+    const tasks = Store.getTasks();
 
     let filteredTasks = tasks;
     if (this.taskFilter === 'PENDING') {
@@ -1108,8 +1135,8 @@ const UIController = {
       `;
     } else {
       filteredTasks.forEach(task => {
-        const subject = StorageService.getSubjectById(task.subjectId);
-        const topic = StorageService.getTopicById(task.topicId);
+        const subject = Store.getSubjectById(task.subjectId);
+        const topic = Store.getTopicById(task.topicId);
         const subjectColor = subject ? subject.color : '#2563EB';
         const subjectName = subject ? subject.name : 'General';
         const topicName = topic ? topic.name : 'General';
@@ -1221,7 +1248,7 @@ const UIController = {
     if (subjectSelect && topicSelect) {
       subjectSelect.addEventListener('change', () => {
         const subjId = subjectSelect.value;
-        const topics = StorageService.getTopicsBySubject(subjId);
+        const topics = Store.getTopicsBySubject(subjId);
         topicSelect.innerHTML = '<option value="">General / No topic linked</option>' +
           topics.map(t => `<option value="${t.id}">${t.name} (${t.confidence})</option>`).join('');
       });
@@ -1260,7 +1287,7 @@ const UIController = {
           return;
         }
 
-        StorageService.saveTask({
+        Store.saveTask({
           title,
           subjectId,
           topicId,
@@ -1281,7 +1308,7 @@ const UIController = {
     container.querySelectorAll('.task-checkbox').forEach(box => {
       box.addEventListener('click', () => {
         const id = box.getAttribute('data-task-id');
-        const task = StorageService.toggleTaskCompletion(id);
+        const task = Store.toggleTaskCompletion(id);
         if (task && task.isCompleted) {
           this.triggerConfetti();
           this.showToast('Task marked complete! Great progress.', 'success');
@@ -1297,7 +1324,7 @@ const UIController = {
         e.stopPropagation();
         const taskId = box.getAttribute('data-task-id');
         const stId = box.getAttribute('data-subtask-id');
-        const result = StorageService.toggleSubtask(taskId, stId);
+        const result = Store.toggleSubtask(taskId, stId);
         if (result && result.subtask.isDone) {
           this.showToast(`Step "${result.subtask.text}" checked off!`, 'success');
         }
@@ -1312,7 +1339,7 @@ const UIController = {
           const taskId = input.getAttribute('data-task-id');
           const text = input.value.trim();
           if (text) {
-            StorageService.addSubtask(taskId, text);
+            Store.addSubtask(taskId, text);
             this.showToast('Step added', 'info');
             this.renderTasks();
           }
@@ -1325,7 +1352,7 @@ const UIController = {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-task-id');
         if (confirm('Delete this task?')) {
-          StorageService.deleteTask(id);
+          Store.deleteTask(id);
           this.showToast('Task removed', 'info');
           this.renderTasks();
           this.updateSidebarStats();
@@ -1358,16 +1385,16 @@ const UIController = {
     const container = document.getElementById('daily-plan-content');
     if (!container) return;
 
-    const allTasks = StorageService.getTasks();
-    const allTopics = StorageService.getTopics();
-    let currentPlan = StorageService.getDailyPlan();
+    const allTasks = Store.getTasks();
+    const allTopics = Store.getTopics();
+    let currentPlan = Store.getDailyPlan();
 
     // Default to 120 minutes if no plan exists yet
     let availableMinutes = currentPlan ? currentPlan.availableTimeMinutes : 120;
 
     // Recalculate plan dynamically
     currentPlan = PrioritisationEngine.generateDailyPlan(availableMinutes, allTasks, allTopics);
-    StorageService.saveDailyPlan(currentPlan);
+    Store.saveDailyPlan(currentPlan);
 
     const planned = currentPlan.plannedTasks || [];
     const deferred = currentPlan.deferredTasks || [];
@@ -1452,8 +1479,8 @@ const UIController = {
       `;
     } else {
       planned.forEach((item, index) => {
-        const subject = StorageService.getSubjectById(item.subjectId);
-        const topic = StorageService.getTopicById(item.topicId);
+        const subject = Store.getSubjectById(item.subjectId);
+        const topic = Store.getTopicById(item.topicId);
         const subjectColor = subject ? subject.color : '#2563EB';
         const subjectName = subject ? subject.name : 'General';
         const topicName = topic ? topic.name : 'General';
@@ -1509,7 +1536,7 @@ const UIController = {
       `;
 
       deferred.forEach(item => {
-        const subject = StorageService.getSubjectById(item.subjectId);
+        const subject = Store.getSubjectById(item.subjectId);
         const subjectName = subject ? subject.name : 'General';
         html += `
           <div class="card" style="padding: 14px 18px; margin-bottom: 10px; background-color: var(--color-bg-subtle); border-color: var(--border-light); opacity: 0.85;">
@@ -1546,10 +1573,10 @@ const UIController = {
 
       slider.addEventListener('change', () => {
         const val = parseInt(slider.value, 10);
-        const allTasks = StorageService.getTasks();
-        const allTopics = StorageService.getTopics();
+        const allTasks = Store.getTasks();
+        const allTopics = Store.getTopics();
         const newPlan = PrioritisationEngine.generateDailyPlan(val, allTasks, allTopics);
-        StorageService.saveDailyPlan(newPlan);
+        Store.saveDailyPlan(newPlan);
         this.renderDailyPlan();
         this.updateSidebarStats();
       });
@@ -1559,10 +1586,10 @@ const UIController = {
     container.querySelectorAll('.preset-pill').forEach(pill => {
       pill.addEventListener('click', () => {
         const val = parseInt(pill.getAttribute('data-preset'), 10);
-        const allTasks = StorageService.getTasks();
-        const allTopics = StorageService.getTopics();
+        const allTasks = Store.getTasks();
+        const allTopics = Store.getTopics();
         const newPlan = PrioritisationEngine.generateDailyPlan(val, allTasks, allTopics);
-        StorageService.saveDailyPlan(newPlan);
+        Store.saveDailyPlan(newPlan);
         this.renderDailyPlan();
         this.updateSidebarStats();
       });
@@ -1623,7 +1650,7 @@ const UIController = {
 
           reordered.forEach((t, i) => { t.rank = i + 1; });
           plan.plannedTasks = reordered;
-          StorageService.saveDailyPlan(plan);
+          Store.saveDailyPlan(plan);
           this.showToast('Schedule order updated!', 'info');
           this.renderDailyPlan();
         }
@@ -1641,7 +1668,7 @@ const UIController = {
           reordered[idx - 1] = temp;
           reordered.forEach((t, i) => { t.rank = i + 1; });
           plan.plannedTasks = reordered;
-          StorageService.saveDailyPlan(plan);
+          Store.saveDailyPlan(plan);
           this.showToast('Task moved up', 'info');
           this.renderDailyPlan();
         }
@@ -1658,7 +1685,7 @@ const UIController = {
           reordered[idx + 1] = temp;
           reordered.forEach((t, i) => { t.rank = i + 1; });
           plan.plannedTasks = reordered;
-          StorageService.saveDailyPlan(plan);
+          Store.saveDailyPlan(plan);
           this.showToast('Task moved down', 'info');
           this.renderDailyPlan();
         }
@@ -1671,7 +1698,7 @@ const UIController = {
      ========================================================================== */
   openFocusCockpit(taskId) {
     this.activeFocusTaskId = taskId;
-    const task = StorageService.getTaskById(taskId);
+    const task = Store.getTaskById(taskId);
     if (!task) return;
 
     const modal = document.getElementById('modal-focus');
@@ -1691,8 +1718,8 @@ const UIController = {
       isRunning: false
     };
 
-    const subject = StorageService.getSubjectById(task.subjectId);
-    const topic = StorageService.getTopicById(task.topicId);
+    const subject = Store.getSubjectById(task.subjectId);
+    const topic = Store.getTopicById(task.topicId);
     const subjectName = subject ? subject.name : 'General Course';
     const topicName = topic ? topic.name : 'General';
     const currentConf = topic ? topic.confidence : 'MEDIUM';
@@ -1902,14 +1929,14 @@ const UIController = {
       box.addEventListener('click', () => {
         const tId = box.getAttribute('data-task-id');
         const stId = box.getAttribute('data-subtask-id');
-        const result = StorageService.toggleSubtask(tId, stId);
+        const result = Store.toggleSubtask(tId, stId);
         if (result) {
           box.classList.toggle('checked', result.subtask.isDone);
           box.innerHTML = result.subtask.isDone ? '✔' : '';
           const textEl = box.nextElementSibling;
           if (textEl) textEl.classList.toggle('checked', result.subtask.isDone);
 
-          const updatedTask = StorageService.getTaskById(tId);
+          const updatedTask = Store.getTaskById(tId);
           const progEl = container.querySelector('#cockpit-subtask-progress');
           if (progEl && updatedTask && updatedTask.subtasks) {
             const doneCount = updatedTask.subtasks.filter(s => s.isDone).length;
@@ -1931,7 +1958,7 @@ const UIController = {
     if (completeBtn) {
       completeBtn.addEventListener('click', () => {
         const timeSpent = parseInt(actualTimeInput.value, 10) || initialMinutes;
-        StorageService.recordStudySession(taskId, timeSpent, selectedPostConf);
+        Store.recordStudySession(taskId, timeSpent, selectedPostConf);
 
         AudioSynth.playChime();
         this.triggerConfetti();
@@ -1956,10 +1983,10 @@ const UIController = {
     const container = document.getElementById('progress-content');
     if (!container) return;
 
-    const progress = StorageService.getProgress();
-    const tasks = StorageService.getTasks();
-    const subjects = StorageService.getSubjects();
-    const topics = StorageService.getTopics();
+    const progress = Store.getProgress();
+    const tasks = Store.getTasks();
+    const subjects = Store.getSubjects();
+    const topics = Store.getTopics();
 
     const completedTasks = tasks.filter(t => t.isCompleted);
     const pendingTasks = tasks.filter(t => !t.isCompleted);
@@ -2045,5 +2072,238 @@ const UIController = {
     `;
 
     container.innerHTML = html;
+  },
+
+  updateSidebarAuth() {
+    const userPill = document.getElementById('sidebar-user-pill');
+    const authAction = document.getElementById('sidebar-auth-action');
+    if (!userPill && !authAction) return;
+
+    const isGuest = typeof AuthService !== 'undefined' ? AuthService.isGuest() : true;
+    const user = typeof AuthService !== 'undefined' ? AuthService.getUser() : null;
+
+    if (userPill) {
+      if (user) {
+        const name = (user.user_metadata && user.user_metadata.display_name) || user.email.split('@')[0];
+        userPill.innerHTML = `
+          <div class="guest-pill" style="background: rgba(37, 99, 235, 0.12); color: #2563EB; border-color: rgba(37, 99, 235, 0.3);" title="Signed in as ${escapeHtml(user.email)}">
+            <span>☁️</span> <span>${escapeHtml(name)}</span>
+          </div>
+        `;
+      } else if (isGuest) {
+        userPill.innerHTML = `
+          <div class="guest-pill" title="Stored on this device only">
+            <span>⚡</span> <span>Guest Mode</span>
+          </div>
+        `;
+      } else {
+        userPill.innerHTML = '';
+      }
+    }
+
+    if (authAction) {
+      if (user) {
+        authAction.innerHTML = `
+          <button class="btn btn-secondary btn-sm w-full" id="btn-sidebar-logout" style="justify-content: center; height: 36px; font-size: 12px; gap: 6px;">
+            🚪 Log out
+          </button>
+        `;
+        const logoutBtn = document.getElementById('btn-sidebar-logout');
+        if (logoutBtn) {
+          logoutBtn.addEventListener('click', () => {
+            AuthService.signOut();
+          });
+        }
+      } else if (isGuest) {
+        authAction.innerHTML = `
+          <a href="#/signup" class="btn btn-primary btn-sm w-full" style="justify-content: center; height: 36px; font-size: 12px; text-decoration: none;">
+            ☁️ Sign up to Sync
+          </a>
+        `;
+      } else {
+        authAction.innerHTML = '';
+      }
+    }
+  },
+
+  renderSettings() {
+    const container = document.getElementById('settings-content');
+    if (!container) return;
+
+    const user = typeof AuthService !== 'undefined' ? AuthService.getUser() : null;
+    const isGuest = typeof AuthService !== 'undefined' ? AuthService.isGuest() : true;
+    const settings = Store.getUserSettings();
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+
+    let html = `
+      <div class="settings-container">
+        <!-- Settings Header -->
+        <div style="margin-bottom: 8px;">
+          <h2 style="font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 4px;">Preferences & Cloud</h2>
+          <p class="text-muted" style="font-size: 14px;">Configure study defaults, appearance, and cross-device cloud synchronization.</p>
+        </div>
+
+        <!-- 1. Appearance Card -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <h3>🎨 Appearance</h3>
+            <span class="text-muted" style="font-size: 12.5px;">Choose your visual workspace theme</span>
+          </div>
+          <div class="settings-row">
+            <div class="settings-label">
+              <strong>Interface Theme</strong>
+              <span>Switch between Midnight Dark (OLED contrast) and Paper Light</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-sm ${currentTheme === 'light' ? 'btn-primary' : 'btn-secondary'}" id="btn-set-theme-light">☀️ Paper Light</button>
+              <button class="btn btn-sm ${currentTheme === 'dark' ? 'btn-primary' : 'btn-secondary'}" id="btn-set-theme-dark">🌙 Midnight Dark</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Study Session Defaults -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <h3>⏱️ Study Planning Defaults</h3>
+            <span class="text-muted" style="font-size: 12.5px;">Configure time constraints for your daily study engine</span>
+          </div>
+          <div class="settings-row">
+            <div class="settings-label">
+              <strong>Default Daily Available Minutes</strong>
+              <span>Standard starting time budget when generating today's plan</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <select id="select-default-minutes" class="form-input" style="width: 140px; height: 38px;">
+                <option value="60" ${settings.default_minutes == 60 ? 'selected' : ''}>60 min (1 hr)</option>
+                <option value="90" ${settings.default_minutes == 90 ? 'selected' : ''}>90 min (1.5 hrs)</option>
+                <option value="120" ${settings.default_minutes == 120 ? 'selected' : ''}>120 min (2 hrs)</option>
+                <option value="180" ${settings.default_minutes == 180 ? 'selected' : ''}>180 min (3 hrs)</option>
+                <option value="240" ${settings.default_minutes == 240 ? 'selected' : ''}>240 min (4 hrs)</option>
+              </select>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="settings-label">
+              <strong>Formula Strategy</strong>
+              <span>Urgency (due date delta) × Importance Weight × Topic Confidence Multiplier</span>
+            </div>
+            <span class="badge-confidence high" style="font-size: 11px;">Active: flow.md Algorithm</span>
+          </div>
+        </div>
+
+        <!-- 3. Account & Cloud Synchronization -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <h3>☁️ Cloud Account & Synchronization</h3>
+            <span class="text-muted" style="font-size: 12.5px;">PostgreSQL Row Level Security (RLS) data persistence</span>
+          </div>
+    `;
+
+    if (user) {
+      const displayName = (user.user_metadata && user.user_metadata.display_name) || 'Student';
+      html += `
+        <div class="settings-row">
+          <div class="settings-label">
+            <strong>Connected Cloud Account</strong>
+            <span>Signed in as <strong>${escapeHtml(user.email)}</strong> (${escapeHtml(displayName)})</span>
+          </div>
+          <span class="guest-pill" style="background: rgba(16, 185, 129, 0.12); color: #059669; border-color: rgba(16, 185, 129, 0.3);">
+            ✓ Cloud Synced
+          </span>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">
+            <strong>Cross-Device Session</strong>
+            <span>Changes made here sync automatically to your phone and other browsers.</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btn-settings-logout">Log out</button>
+        </div>
+      `;
+    } else {
+      html += `
+        <div class="settings-row">
+          <div class="settings-label">
+            <strong>Current Mode: Guest</strong>
+            <span>Your study data is currently saved on this device only.</span>
+          </div>
+          <a href="#/signup" class="btn btn-accent btn-sm" style="text-decoration: none;">Create Cloud Account</a>
+        </div>
+      `;
+    }
+
+    html += `
+        </div>
+
+        <!-- 4. Danger Zone (Privacy & Data Removal) -->
+        <div class="settings-card danger-zone">
+          <div class="settings-card-header">
+            <h3>⚠️ Privacy & Data Reset</h3>
+            <span class="text-muted" style="font-size: 12.5px;">Self-service controls to purge your personal study records</span>
+          </div>
+          <div class="settings-row">
+            <div class="settings-label">
+              <strong style="color: #DC2626;">Delete all my data</strong>
+              <span>Permanently wipe all your subjects, topics, tasks, and study records.</span>
+            </div>
+            <button class="btn btn-danger-ghost" id="btn-delete-all-data" style="border: 1px solid rgba(239, 68, 68, 0.4); font-weight: 700; background: #FFFFFF;">
+              Purge All Data
+            </button>
+          </div>
+          <p class="text-muted" style="font-size: 12px; margin-top: 10px; line-height: 1.4;">
+            <em>Note on account deletion:</em> Full deletion of user authentication records from Supabase auth.users requires a server-side administrative function and is deferred in static browser deployments. "Delete all my data" immediately purges all courses, topics, tasks, and study logs from the database and signs you out.
+          </p>
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+
+    // Attach Settings Event Handlers
+    const lightBtn = document.getElementById('btn-set-theme-light');
+    const darkBtn = document.getElementById('btn-set-theme-dark');
+    if (lightBtn) lightBtn.addEventListener('click', () => {
+      this.applyTheme('light');
+      localStorage.setItem('panorama_theme', 'light');
+      this.renderSettings();
+    });
+    if (darkBtn) darkBtn.addEventListener('click', () => {
+      this.applyTheme('dark');
+      localStorage.setItem('panorama_theme', 'dark');
+      this.renderSettings();
+    });
+
+    const minSelect = document.getElementById('select-default-minutes');
+    if (minSelect) {
+      minSelect.addEventListener('change', (e) => {
+        const val = parseInt(e.target.value, 10);
+        Store.updateUserSettings({ default_minutes: val });
+        this.showToast(`Default study time updated to ${val} minutes`, 'success');
+      });
+    }
+
+    const logoutBtn = document.getElementById('btn-settings-logout');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        AuthService.signOut();
+      });
+    }
+
+    const deleteBtn = document.getElementById('btn-delete-all-data');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', async () => {
+        if (confirm('Are you ABSOLUTELY sure? This will permanently delete all your subjects, topics, tasks, and logged study sessions. This action cannot be undone.')) {
+          deleteBtn.disabled = true;
+          deleteBtn.textContent = 'Purging data...';
+          try {
+            await Store.deleteAllUserData();
+            this.showToast('All your data has been deleted.', 'info');
+          } catch (err) {
+            deleteBtn.disabled = false;
+            deleteBtn.textContent = 'Purge All Data';
+            this.showToast(`Error deleting data: ${err.message}`, 'error');
+          }
+        }
+      });
+    }
   }
 };
