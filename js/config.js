@@ -9,8 +9,8 @@
 const CONFIG = {
   // Replace these with your actual Supabase project credentials in the Supabase Dashboard
   // Settings -> API -> Project URL & Project API Keys (anon public)
-  SUPABASE_URL: (typeof window !== 'undefined' && window.__PANORAMA_SUPABASE_URL__) || 'https://placeholder-project.supabase.co',
-  SUPABASE_ANON_KEY: (typeof window !== 'undefined' && window.__PANORAMA_SUPABASE_ANON_KEY__) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder-anon-key',
+  SUPABASE_URL: (typeof window !== 'undefined' && window.__PANORAMA_SUPABASE_URL__) || 'https://plawuhumhaqtntprsxuw.supabase.co',
+  SUPABASE_ANON_KEY: (typeof window !== 'undefined' && window.__PANORAMA_SUPABASE_ANON_KEY__) || 'sb_publishable_62b-nWtdlXQeSYQpD8cHcw_XitWxK-B',
 
   // Feature Flags
   ENABLE_GOOGLE_AUTH: false, // Default off per brief
