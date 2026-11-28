@@ -60,13 +60,13 @@ After your Cloudflare deployment finishes, you must add your production URL to S
 2. Go to **Authentication** -> **URL Configuration**.
 3. Update **Site URL**:
    ```
-   https://YOUR_SUBDOMAIN.pages.dev
+   https://inception.av647247.workers.dev
    ```
 4. In **Redirect URLs**, add:
    ```
-   https://YOUR_SUBDOMAIN.pages.dev/#/app/dashboard
-   https://YOUR_SUBDOMAIN.pages.dev/#/confirm-email
-   https://*.pages.dev/**
+   https://inception.av647247.workers.dev/#/app/dashboard
+   https://inception.av647247.workers.dev/#/confirm-email
+   https://inception.av647247.workers.dev/**
    ```
 5. Click **Save**.
 
@@ -85,7 +85,7 @@ git push origin main
 
 ## Production Verification Checklist
 
-1. [ ] **Sign up & Log in**: Navigate to `https://YOUR_SUBDOMAIN.pages.dev/#/signup`, create an account, log out, and log back in.
+1. [ ] **Sign up & Log in**: Navigate to `https://inception.av647247.workers.dev/#/signup`, create an account, log out, and log back in.
 2. [ ] **Cross-Device Test**: Add a subject and task on your computer; log in with the same account on a mobile browser and verify the data appears instantly.
 3. [ ] **RLS Isolation Test**: Open an Incognito window, register User B, and confirm zero tasks or subjects belonging to User A are visible.
 4. [ ] **Guest Mode**: Open in a private browser, click "Explore as Guest", add sample data, and verify persistence.

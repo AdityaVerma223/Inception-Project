@@ -49,7 +49,8 @@ PANORAMA is an opinionated, distraction-free study planning application designed
 
 ## 🚀 Live Links & Local Execution
 
-- **Production Cloudflare Deployment:** See [`DEPLOY.md`](DEPLOY.md)
+- **Live Production URL (Cloudflare Workers):** [https://inception.av647247.workers.dev](https://inception.av647247.workers.dev)
+- **Deployment Guide:** See [`DEPLOY.md`](DEPLOY.md)
 - **GitHub Pages Mirror:** [https://adityaverma223.github.io/Inception-Project/](https://adityaverma223.github.io/Inception-Project/)
 - **Repository:** [https://github.com/AdityaVerma223/Inception-Project](https://github.com/AdityaVerma223/Inception-Project)
 - **Local Testing:** Serve via any static server or open `index.html` in modern Safari/Chrome:
