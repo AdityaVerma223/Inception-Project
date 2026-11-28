@@ -17,6 +17,7 @@ create table if not exists public.profiles (
 
 alter table public.profiles enable row level security;
 
+drop policy if exists "profiles_user_isolation" on public.profiles;
 create policy "profiles_user_isolation" on public.profiles
   for all
   using (id = (select auth.uid()))
@@ -65,6 +66,7 @@ create table if not exists public.user_settings (
 
 alter table public.user_settings enable row level security;
 
+drop policy if exists "user_settings_isolation" on public.user_settings;
 create policy "user_settings_isolation" on public.user_settings
   for all
   using (user_id = (select auth.uid()))
@@ -85,6 +87,7 @@ create table if not exists public.subjects (
 
 alter table public.subjects enable row level security;
 
+drop policy if exists "subjects_user_isolation" on public.subjects;
 create policy "subjects_user_isolation" on public.subjects
   for all
   using (user_id = (select auth.uid()))
@@ -106,6 +109,7 @@ create table if not exists public.topics (
 
 alter table public.topics enable row level security;
 
+drop policy if exists "topics_user_isolation" on public.topics;
 create policy "topics_user_isolation" on public.topics
   for all
   using (user_id = (select auth.uid()))
@@ -135,6 +139,7 @@ create table if not exists public.tasks (
 
 alter table public.tasks enable row level security;
 
+drop policy if exists "tasks_user_isolation" on public.tasks;
 create policy "tasks_user_isolation" on public.tasks
   for all
   using (user_id = (select auth.uid()))
@@ -160,6 +165,7 @@ create table if not exists public.study_sessions (
 
 alter table public.study_sessions enable row level security;
 
+drop policy if exists "study_sessions_user_isolation" on public.study_sessions;
 create policy "study_sessions_user_isolation" on public.study_sessions
   for all
   using (user_id = (select auth.uid()))
