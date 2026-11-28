@@ -157,17 +157,17 @@ const UIController = {
   },
 
   initTheme() {
-    const savedTheme = localStorage.getItem('panorama_theme') || 'light';
+    const savedTheme = localStorage.getItem('panorama_theme') || 'dark';
     this.applyTheme(savedTheme);
 
     const toggleBtn = document.getElementById('theme-toggle-btn');
     if (toggleBtn) {
       toggleBtn.addEventListener('click', () => {
-        const current = document.documentElement.getAttribute('data-theme') || 'light';
+        const current = document.documentElement.getAttribute('data-theme') || 'dark';
         const nextTheme = current === 'dark' ? 'light' : 'dark';
         this.applyTheme(nextTheme);
         localStorage.setItem('panorama_theme', nextTheme);
-        this.showToast(`Switched to ${nextTheme === 'dark' ? 'Midnight Dark' : 'Paper Light'} mode`, 'info');
+        this.showToast(`Switched to ${nextTheme === 'dark' ? 'Obsidian Liquid Glass' : 'Quartz Frosted Glass'} mode`, 'info');
       });
     }
   },
@@ -526,7 +526,7 @@ const UIController = {
     let html = `
       <div class="dashboard-grid">
         <!-- Hero Banner -->
-        <div class="hero-banner">
+        <div class="hero-banner glass-sheen">
           <h1 class="hero-greeting">${greeting}</h1>
           <p class="hero-subtitle">Not just when it's due. When to start, and how long.</p>
 
@@ -2038,7 +2038,7 @@ const UIController = {
         const highConfCount = subjTopics.filter(t => t.confidence === 'HIGH').length;
 
         html += `
-          <div style="padding: 16px; border: 1px solid var(--border-light); border-radius: var(--radius-md); margin-bottom: 12px; background: #FFFFFF;">
+          <div style="padding: 16px; border: 1px solid var(--glass-border); border-radius: var(--radius-md); margin-bottom: 12px; background: var(--color-bg-subtle);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span class="subject-color-swatch" style="background-color: ${subj.color || '#2563EB'};"></span>
@@ -2133,7 +2133,7 @@ const UIController = {
     const user = typeof AuthService !== 'undefined' ? AuthService.getUser() : null;
     const isGuest = typeof AuthService !== 'undefined' ? AuthService.isGuest() : true;
     const settings = Store.getUserSettings();
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
 
     let html = `
       <div class="settings-container">
@@ -2147,16 +2147,16 @@ const UIController = {
         <div class="settings-card">
           <div class="settings-card-header">
             <h3>🎨 Appearance</h3>
-            <span class="text-muted" style="font-size: 12.5px;">Choose your visual workspace theme</span>
+            <span class="text-muted" style="font-size: 12.5px;">Choose your liquid glass workspace theme</span>
           </div>
           <div class="settings-row">
             <div class="settings-label">
               <strong>Interface Theme</strong>
-              <span>Switch between Midnight Dark (OLED contrast) and Paper Light</span>
+              <span>Switch between Obsidian Liquid Glass (Dark) and Quartz Frosted Glass (Light)</span>
             </div>
             <div style="display: flex; gap: 8px;">
-              <button class="btn btn-sm ${currentTheme === 'light' ? 'btn-primary' : 'btn-secondary'}" id="btn-set-theme-light">☀️ Paper Light</button>
-              <button class="btn btn-sm ${currentTheme === 'dark' ? 'btn-primary' : 'btn-secondary'}" id="btn-set-theme-dark">🌙 Midnight Dark</button>
+              <button class="btn btn-sm ${currentTheme === 'light' ? 'btn-primary' : 'btn-secondary'}" id="btn-set-theme-light">☀️ Quartz Light</button>
+              <button class="btn btn-sm ${currentTheme === 'dark' ? 'btn-primary' : 'btn-secondary'}" id="btn-set-theme-dark">🌙 Obsidian Dark</button>
             </div>
           </div>
         </div>
@@ -2245,7 +2245,7 @@ const UIController = {
               <strong style="color: #DC2626;">Delete all my data</strong>
               <span>Permanently wipe all your subjects, topics, tasks, and study records.</span>
             </div>
-            <button class="btn btn-danger-ghost" id="btn-delete-all-data" style="border: 1px solid rgba(239, 68, 68, 0.4); font-weight: 700; background: #FFFFFF;">
+            <button class="btn btn-danger-ghost btn-danger-outline" id="btn-delete-all-data">
               Purge All Data
             </button>
           </div>

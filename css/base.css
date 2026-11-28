@@ -1,5 +1,5 @@
 /* ==========================================================================
-   PANORAMA — Base Styles, Typography, Layout & Animations
+   PANORAMA — Liquid Glass Base, Full-Screen Backdrop, Intro & Shell Layout
    ========================================================================== */
 
 *, *::before, *::after {
@@ -13,6 +13,7 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
+  background-color: var(--color-bg-canvas);
 }
 
 body {
@@ -21,8 +22,262 @@ body {
   color: var(--color-navy-700);
   line-height: 1.5;
   min-height: 100vh;
+  width: 100%;
   display: flex;
+  flex-direction: column;
   overflow-x: hidden;
+  position: relative;
+}
+
+/* ==========================================================================
+   FULL-SCREEN AMBIENT LIQUID REFRACTION BACKDROP (reactdrops.dev aesthetic)
+   ========================================================================== */
+.liquid-ambient-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(37, 99, 235, 0.16) 0%, transparent 45%),
+    radial-gradient(circle at 82% 84%, rgba(139, 92, 246, 0.14) 0%, transparent 45%),
+    var(--color-bg-canvas);
+}
+
+[data-theme="light"] .liquid-ambient-backdrop {
+  background:
+    radial-gradient(circle at 15% 12%, rgba(59, 130, 246, 0.18) 0%, transparent 48%),
+    radial-gradient(circle at 85% 82%, rgba(139, 92, 246, 0.14) 0%, transparent 48%),
+    var(--color-bg-canvas);
+}
+
+/* Architectural Grid Matrix with Radial Vignette */
+.liquid-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 45%, #000 35%, transparent 100%);
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 45%, #000 35%, transparent 100%);
+}
+
+[data-theme="light"] .liquid-grid-overlay {
+  background-image:
+    linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+}
+
+/* Drifting Optical Liquid Orbs */
+.liquid-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.55;
+  will-change: transform;
+}
+
+.liquid-blob-1 {
+  width: 560px;
+  height: 560px;
+  top: -140px;
+  left: -100px;
+  background: radial-gradient(circle var(--in-oklab), rgba(59, 130, 246, 0.42), rgba(37, 99, 235, 0.05) 70%);
+}
+
+.liquid-blob-2 {
+  width: 520px;
+  height: 520px;
+  bottom: -140px;
+  right: -80px;
+  background: radial-gradient(circle var(--in-oklab), rgba(139, 92, 246, 0.36), rgba(99, 102, 241, 0.04) 70%);
+}
+
+.liquid-blob-3 {
+  width: 400px;
+  height: 400px;
+  top: 42%;
+  left: 52%;
+  background: radial-gradient(circle var(--in-oklab), rgba(6, 182, 212, 0.24), transparent 70%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .liquid-blob-1 {
+    animation: blobDrift1 22s ease-in-out infinite alternate;
+  }
+  .liquid-blob-2 {
+    animation: blobDrift2 26s ease-in-out infinite alternate;
+  }
+  .liquid-blob-3 {
+    animation: blobDrift3 19s ease-in-out infinite alternate;
+  }
+}
+
+/* ==========================================================================
+   CINEMATIC STARTING ANIMATION (#panorama-intro)
+   ========================================================================== */
+.panorama-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(37, 99, 235, 0.18) 0%, transparent 55%),
+    #02050d;
+  color: #f8fafc;
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    opacity 620ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 620ms cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.panorama-intro.is-leaving {
+  opacity: 0;
+  transform: scale(1.06);
+  pointer-events: none;
+}
+
+.panorama-intro[hidden] {
+  display: none;
+}
+
+.intro-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 24px;
+  z-index: 2;
+}
+
+/* Expanding Droplet Ripples */
+.intro-ripple {
+  position: absolute;
+  top: 44px;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(96, 165, 250, 0.55);
+  box-shadow: 0 0 24px rgba(59, 130, 246, 0.35), inset 0 0 18px rgba(34, 211, 238, 0.2);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 3D Liquid Glass Prism Tile */
+.intro-glass-prism {
+  width: 96px;
+  height: 96px;
+  border-radius: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.2) 0%, rgba(59, 130, 246, 0.14) 55%, rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  box-shadow:
+    0 24px 56px -12px rgba(37, 99, 235, 0.55),
+    0 0 40px rgba(34, 211, 238, 0.25),
+    inset 0 2px 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 4px 0 rgba(15, 23, 42, 0.4);
+  color: #ffffff;
+  margin-bottom: 28px;
+  overflow: hidden;
+}
+
+.intro-glass-prism::after {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.45) 50%, transparent 65%);
+  transform: translateX(-100%);
+}
+
+.intro-wordmark {
+  font-size: clamp(2.1rem, 5vw, 3.2rem);
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  color: #ffffff;
+  background: linear-gradient(180deg, #ffffff 0%, #bfdbfe 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 10px;
+  padding-left: 0.22em; /* Optical center compensation for letter-spacing */
+}
+
+.intro-tagline {
+  font-size: clamp(0.95rem, 2vw, 1.12rem);
+  font-weight: 500;
+  color: #94a3b8;
+  letter-spacing: 0.02em;
+  max-width: 480px;
+}
+
+.intro-hairline-track {
+  width: 180px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 99px;
+  margin-top: 28px;
+  overflow: hidden;
+}
+
+.intro-hairline-fill {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #22d3ee, #8b5cf6);
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+.intro-skip-hint {
+  position: absolute;
+  bottom: 28px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.65);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .intro-glass-prism {
+    animation: introPrismDrop 850ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  .intro-glass-prism::after {
+    animation: introSpecularSweep 1100ms 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .intro-ripple-1 {
+    animation: introRippleOut 1350ms 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .intro-ripple-2 {
+    animation: introRippleOut 1450ms 420ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .intro-wordmark {
+    animation: introTextFocus 800ms 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .intro-tagline {
+    animation: introTextFocus 800ms 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .intro-hairline-fill {
+    animation: introLineFill 1450ms 150ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panorama-intro {
+    transition-duration: 150ms;
+  }
+  .intro-hairline-fill {
+    transform: scaleX(1);
+  }
 }
 
 /* ==========================================================================
@@ -32,7 +287,7 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--color-navy-900);
   font-weight: var(--font-weight-bold);
   line-height: 1.25;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
 
 h1 { font-size: var(--font-size-xl); }
@@ -50,64 +305,69 @@ p {
 .text-mono { font-family: var(--font-family-mono); }
 
 /* ==========================================================================
-   GLOBAL APP SHELL LAYOUT (DESKTOP FIRST)
+   GLOBAL FULL-SCREEN LIQUID GLASS APP SHELL
    ========================================================================== */
 #app-shell {
   display: flex;
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
   position: relative;
-  background-color: var(--color-bg-canvas);
+  z-index: 1;
+  background: transparent;
 }
 
-/* SIDEBAR (Desktop: 260px Fixed) */
+/* FLOATING LIQUID GLASS SIDEBAR DOCK */
 .sidebar {
-  width: 260px;
-  height: 100vh;
+  width: 268px;
+  height: calc(100vh - 32px);
   position: fixed;
-  top: 0;
-  left: 0;
-  background-color: var(--color-bg-surface);
-  border-right: 1px solid var(--border-light);
+  top: 16px;
+  left: 16px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   z-index: 50;
   padding: var(--space-6) var(--space-4);
-  box-shadow: var(--shadow-sm);
-  transition: transform var(--transition-normal);
+  box-shadow: var(--shadow-card);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+  overflow-y: auto;
 }
 
 /* SIDEBAR HEADER */
 .sidebar-header {
-  padding: 0 var(--space-2) var(--space-6);
+  padding: 0 var(--space-2) var(--space-5);
   border-bottom: 1px solid var(--border-light);
 }
 
 .brand-badge {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
   margin-bottom: var(--space-1);
 }
 
 .brand-icon-box {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-sm);
-  background: var(--gradient-blue);
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(59, 130, 246, 0.85), rgba(6, 182, 212, 0.7));
+  border: 1px solid rgba(255, 255, 255, 0.38);
   color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
-  animation: pulseIcon 4s infinite alternate;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .brand-title {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: var(--color-navy-950);
 }
 
@@ -117,12 +377,12 @@ p {
   font-style: italic;
   display: block;
   line-height: 1.35;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 /* SIDEBAR NAV LINKS */
 .sidebar-nav {
-  margin-top: var(--space-6);
+  margin-top: var(--space-5);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -134,40 +394,40 @@ p {
   align-items: center;
   gap: var(--space-3);
   padding: 11px 14px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   color: var(--color-navy-600);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   text-decoration: none;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: background-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
   border: 1px solid transparent;
   user-select: none;
 }
 
 .nav-link:hover {
   background-color: var(--color-bg-subtle);
-  color: var(--color-navy-900);
-  transform: translateX(2px);
+  color: var(--color-navy-950);
+  transform: translateX(3px);
 }
 
 .nav-link.active {
-  background-color: var(--color-blue-subtle);
-  color: var(--color-blue-primary);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.22) 0%, rgba(6, 182, 212, 0.1) 100%);
+  color: var(--color-navy-950);
   font-weight: var(--font-weight-semibold);
-  border-color: var(--color-blue-border);
+  border-color: var(--glass-border-strong);
   position: relative;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .nav-link.active::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 10%;
-  height: 80%;
-  width: 4px;
-  background-color: var(--color-blue-primary);
+  top: 20%;
+  height: 60%;
+  width: 3px;
+  background: linear-gradient(180deg, #60a5fa, #22d3ee);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
@@ -190,17 +450,17 @@ p {
 
 .sidebar-status-card {
   background: var(--gradient-card-subtle);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   padding: var(--space-3);
   box-shadow: var(--shadow-sm);
 }
 
 .sidebar-status-label {
-  font-size: 11px;
+  font-size: 10.5px;
   text-transform: uppercase;
   font-weight: var(--font-weight-bold);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: var(--color-navy-400);
   margin-bottom: 4px;
 }
@@ -208,33 +468,37 @@ p {
 .sidebar-status-val {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-navy-800);
+  color: var(--color-navy-900);
 }
 
-/* MAIN CONTENT CONTAINER */
+/* MAIN FULL-WIDTH FLUID CONTAINER */
 .main-wrapper {
-  margin-left: 260px;
+  margin-left: 284px;
   flex: 1;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--color-bg-canvas);
+  background: transparent;
   position: relative;
 }
 
-/* TOP STATUS BAR */
+/* FLOATING LIQUID GLASS TOP BAR */
 .top-bar {
   height: 64px;
-  padding: 0 var(--space-8);
+  margin: 16px 32px 0;
+  padding: 0 var(--space-6);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--border-light);
-  background-color: var(--color-bg-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow-card);
   position: sticky;
-  top: 0;
+  top: 16px;
   z-index: 40;
-  backdrop-filter: blur(8px);
 }
 
 .breadcrumbs {
@@ -246,7 +510,7 @@ p {
 }
 
 .breadcrumbs .crumb-active {
-  color: var(--color-navy-900);
+  color: var(--color-navy-950);
   font-weight: var(--font-weight-semibold);
 }
 
@@ -260,51 +524,87 @@ p {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: var(--radius-full);
   background-color: var(--color-bg-subtle);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--glass-border);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
-  color: var(--color-navy-700);
+  color: var(--color-navy-800);
 }
 
-/* MAIN VIEW CANVAS */
+/* FULL-SCREEN FLUID VIEW CANVAS */
 .view-canvas {
   flex: 1;
-  padding: var(--space-8);
-  max-width: 1240px;
+  padding: 28px 32px 48px;
+  max-width: 1680px;
   width: 100%;
   margin: 0 auto;
 }
 
-/* VIEW PANEL SWITCHER */
+/* VIEW PANEL SWITCHER WITH @starting-style ENTRY */
 .view-panel {
   display: none;
   opacity: 0;
-  transform: translateY(8px);
-  transition: opacity var(--transition-normal), transform var(--transition-normal);
+  transform: translateY(12px);
 }
 
 .view-panel.active {
   display: block;
   opacity: 1;
   transform: translateY(0);
-  animation: fadeUp 280ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: opacity 320ms cubic-bezier(0.16, 1, 0.3, 1), transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* MOBILE BOTTOM NAVIGATION BAR (< 768px) */
+@starting-style {
+  .view-panel.active {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+/* POINTER-TRACKING OPTICAL SHEEN UTILITY */
+.glass-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+@media (hover: hover) {
+  .glass-sheen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      480px circle at var(--mx, 50%) var(--my, 20%),
+      rgba(255, 255, 255, 0.11),
+      transparent 45%
+    );
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 260ms ease;
+  }
+
+  .glass-sheen:hover::before {
+    opacity: 1;
+  }
+}
+
+/* MOBILE FLOATING GLASS CAPSULE NAVIGATION (< 768px) */
 .mobile-bottom-nav {
   display: none;
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
   height: 64px;
-  background-color: var(--color-bg-surface);
-  border-top: 1px solid var(--border-light);
+  background: var(--glass-bg-elevated);
+  backdrop-filter: var(--glass-blur-heavy);
+  -webkit-backdrop-filter: var(--glass-blur-heavy);
+  border: 1px solid var(--glass-border-strong);
+  border-radius: 22px;
   z-index: 100;
-  box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.05);
+  box-shadow: var(--shadow-float);
   justify-content: space-around;
   align-items: center;
   padding: 0 var(--space-2);
@@ -323,36 +623,89 @@ p {
   min-width: 58px;
   height: 48px;
   border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), transform var(--transition-fast);
 }
 
 .mobile-nav-item.active {
-  color: var(--color-blue-primary);
+  color: var(--color-blue-hover);
   font-weight: var(--font-weight-semibold);
 }
 
 .mobile-nav-item.active svg {
-  stroke: var(--color-blue-primary);
+  stroke: var(--color-blue-hover);
   transform: scale(1.1);
 }
 
 /* ==========================================================================
-   KEYFRAME ANIMATIONS
+   KEYFRAME ANIMATIONS (COMPOSITOR PROPERTIES ONLY: transform & opacity)
    ========================================================================== */
-@keyframes fadeUp {
-  from {
+@keyframes blobDrift1 {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(60px, 45px, 0) scale(1.12); }
+}
+
+@keyframes blobDrift2 {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(-55px, -40px, 0) scale(1.08); }
+}
+
+@keyframes blobDrift3 {
+  0% { transform: translate3d(-20px, 10px, 0) scale(0.95); }
+  100% { transform: translate3d(35px, -30px, 0) scale(1.1); }
+}
+
+@keyframes introPrismDrop {
+  0% {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translate3d(0, -34px, 0) scale(0.76);
   }
-  to {
+  100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
-@keyframes pulseIcon {
-  0% { transform: scale(1); box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3); }
-  100% { transform: scale(1.04); box-shadow: 0 6px 16px rgba(37, 99, 235, 0.5); }
+@keyframes introSpecularSweep {
+  0% { transform: translateX(-120%) skewX(-18deg); }
+  100% { transform: translateX(140%) skewX(-18deg); }
+}
+
+@keyframes introRippleOut {
+  0% {
+    opacity: 0.75;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.8);
+  }
+}
+
+@keyframes introTextFocus {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes introLineFill {
+  0% { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 @keyframes pulseSoft {
@@ -366,23 +719,21 @@ p {
   100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
-@keyframes floatGentle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-
 /* ==========================================================================
    RESPONSIVE BREAKPOINTS
    ========================================================================== */
 @media (max-width: 1024px) {
   .sidebar {
-    width: 220px;
+    width: 230px;
   }
   .main-wrapper {
-    margin-left: 220px;
+    margin-left: 256px;
+  }
+  .top-bar {
+    margin: 12px 20px 0;
   }
   .view-canvas {
-    padding: var(--space-6);
+    padding: 20px;
   }
 }
 
@@ -392,15 +743,17 @@ p {
   }
   .main-wrapper {
     margin-left: 0;
-    padding-bottom: 76px; /* Space for mobile nav */
+    padding-bottom: 92px;
   }
   .mobile-bottom-nav {
     display: flex;
   }
   .top-bar {
+    margin: 10px 12px 0;
     padding: 0 var(--space-4);
+    top: 10px;
   }
   .view-canvas {
-    padding: var(--space-4);
+    padding: 16px 12px;
   }
 }

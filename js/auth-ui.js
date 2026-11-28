@@ -65,7 +65,22 @@ const AuthUI = (() => {
         </div>
 
         <div class="auth-hero-body">
-          <div class="auth-hero-pill">Study Planning & Prioritisation</div>
+          <div class="liquid-orb-showcase">
+            <div class="liquid-orb-wrap" aria-hidden="true">
+              <div class="liquid-orb-ring"></div>
+              <div class="liquid-orb">
+                <div class="liquid-orb-caustic"></div>
+                <div class="liquid-orb-highlight"></div>
+              </div>
+            </div>
+            <div>
+              <div class="auth-hero-pill">Liquid Glass Study Engine</div>
+              <p class="text-muted" style="font-size: 13px; margin-top: 8px; max-width: 300px;">
+                Optical clarity meets deterministic study scheduling.
+              </p>
+            </div>
+          </div>
+
           <h1 class="auth-hero-title">Not just when it's due.<br><span class="text-gradient">When to start, and how long.</span></h1>
           <p class="auth-hero-desc">
             A research-backed study planner for college students that turns overlapping deadlines and topic confidence into a calm, realistic daily schedule that never exceeds your available time.
@@ -119,7 +134,7 @@ const AuthUI = (() => {
       <div class="auth-container">
         ${getLeftHeroHTML()}
         <div class="auth-form-panel">
-          <div class="auth-card" id="auth-card">
+          <div class="auth-card glass-sheen" id="auth-card">
             <div class="auth-header">
               <h2>Welcome back</h2>
               <p class="text-muted">Enter your credentials to access your study plan</p>
@@ -237,7 +252,7 @@ const AuthUI = (() => {
       <div class="auth-container">
         ${getLeftHeroHTML()}
         <div class="auth-form-panel">
-          <div class="auth-card" id="auth-card">
+          <div class="auth-card glass-sheen" id="auth-card">
             <div class="auth-header">
               <h2>Create your account</h2>
               <p class="text-muted">Start organising your academic life with clarity</p>
@@ -394,7 +409,7 @@ const AuthUI = (() => {
       <div class="auth-container">
         ${getLeftHeroHTML()}
         <div class="auth-form-panel">
-          <div class="auth-card" id="auth-card">
+          <div class="auth-card glass-sheen" id="auth-card">
             <div class="auth-header">
               <h2>Reset password</h2>
               <p class="text-muted">Enter your email and we'll send you a recovery link</p>
@@ -476,7 +491,7 @@ const AuthUI = (() => {
       <div class="auth-container">
         ${getLeftHeroHTML()}
         <div class="auth-form-panel">
-          <div class="auth-card" id="auth-card" style="text-align: center;">
+          <div class="auth-card glass-sheen" id="auth-card" style="text-align: center;">
             <div style="font-size: 48px; margin-bottom: 12px;">✉️</div>
             <div class="auth-header" style="text-align: center;">
               <h2>Check your inbox</h2>

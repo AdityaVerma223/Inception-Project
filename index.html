@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark light">
   <title>PANORAMA — Personalised Study Planning and Prioritisation</title>
   
   <!-- Content Security Policy: Only self, Google Fonts, and Supabase -->
@@ -21,6 +22,45 @@
   <link rel="stylesheet" href="css/auth.css">
 </head>
 <body>
+  <!-- Inline Optical SVG Filter for Liquid Glass Refraction (Zero External Assets) -->
+  <svg id="liquid-svg-defs" aria-hidden="true" style="position: absolute; width: 0; height: 0; overflow: hidden;">
+    <defs>
+      <filter id="liquid-refract" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.015 0.022" numOctaves="2" seed="7" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="18" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- Full-Screen Ambient Liquid Refraction Backdrop -->
+  <div class="liquid-ambient-backdrop" aria-hidden="true">
+    <div class="liquid-blob liquid-blob-1"></div>
+    <div class="liquid-blob liquid-blob-2"></div>
+    <div class="liquid-blob liquid-blob-3"></div>
+    <div class="liquid-grid-overlay"></div>
+  </div>
+
+  <!-- Starting Animation Intro Curtain -->
+  <div id="panorama-intro" class="panorama-intro" role="presentation" title="Click anywhere to skip intro">
+    <div class="intro-stage">
+      <div class="intro-ripple intro-ripple-1"></div>
+      <div class="intro-ripple intro-ripple-2"></div>
+      <div class="intro-glass-prism">
+        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+      </div>
+      <div class="intro-wordmark">PANORAMA</div>
+      <p class="intro-tagline">Not just when it's due. When to start, and how long.</p>
+      <div class="intro-hairline-track">
+        <div class="intro-hairline-fill"></div>
+      </div>
+    </div>
+    <div class="intro-skip-hint">Tap anywhere to enter</div>
+  </div>
+
   <!-- Offline Read-Only Banner -->
   <div id="offline-banner" role="status" aria-live="polite">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -35,13 +75,13 @@
     <span>Offline Mode — Network disconnected. Showing cached study schedule (Read-Only).</span>
   </div>
 
-  <!-- AUTHENTICATION SHELL (Split-Screen Login, Sign Up, Password Reset) -->
+  <!-- AUTHENTICATION SHELL (Split-Screen Liquid Glass Showcase) -->
   <div id="auth-shell" style="display: none;"></div>
 
   <!-- MAIN APPLICATION SHELL -->
   <div id="app-shell">
     
-    <!-- DESKTOP FIXED SIDEBAR (260px) -->
+    <!-- DESKTOP FLOATING LIQUID GLASS SIDEBAR -->
     <aside class="sidebar">
       <div>
         <div class="sidebar-header">
@@ -128,18 +168,18 @@
       </div>
     </aside>
 
-    <!-- MAIN WRAPPER -->
+    <!-- MAIN FULL-SCREEN WRAPPER -->
     <main class="main-wrapper">
       
-      <!-- Top Status Bar -->
+      <!-- Top Floating Glass Bar -->
       <header class="top-bar">
         <div class="breadcrumbs" id="top-breadcrumbs">
           Dashboard <span class="text-muted">/</span> <span class="crumb-active">Home</span>
         </div>
 
         <div class="top-bar-actions">
-          <button id="theme-toggle-btn" class="btn btn-secondary btn-sm" title="Toggle Dark/Light Mode" style="font-size: 13px; padding: 6px 12px; gap: 6px;">
-            <span id="theme-icon">🌙</span> <span id="theme-label">Dark</span>
+          <button id="theme-toggle-btn" class="btn btn-secondary btn-sm" title="Toggle Dark/Light Glass Mode" style="font-size: 13px; padding: 6px 12px; gap: 6px;">
+            <span id="theme-icon">☀️</span> <span id="theme-label">Light</span>
           </button>
 
           <button id="btn-open-backup-modal" class="btn btn-secondary btn-sm" title="Backup & Restore Data" style="font-size: 13px; padding: 6px 12px; gap: 6px;">
@@ -158,7 +198,7 @@
         </div>
       </header>
 
-      <!-- View Canvas Switcher -->
+      <!-- Full-Width View Canvas Switcher -->
       <div class="view-canvas">
         
         <!-- Screen 1: Dashboard -->
@@ -278,7 +318,7 @@
           <div style="padding: 14px; border: 1px dashed var(--confidence-low-border); border-radius: var(--radius-md); background: var(--confidence-low-bg);">
             <h4 style="font-size: 13px; color: var(--confidence-low-text); margin-bottom: 4px;">Reset All Data</h4>
             <p class="text-muted" style="font-size: 12px; margin-bottom: 8px;">Clear all local subjects and tasks to start completely fresh.</p>
-            <button class="btn btn-danger-ghost" id="btn-reset-database" style="font-weight: 700; border: 1px solid var(--confidence-low-border); background: #FFFFFF;">
+            <button class="btn btn-danger-ghost btn-danger-outline" id="btn-reset-database">
               ⚠️ Wipe Everything & Reset
             </button>
           </div>
